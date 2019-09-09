@@ -19,32 +19,120 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local is = require "luact.src.is"
-
 local requestRender = require "luact.src.renderer.requestRender"
 local unmount = require "luact.src.renderer.unmount"
-local forceUnmount = require "luact.src.renderer.forceUnmount"
+
+local states = require "luact.src.state"
+
+local ELEMENT = require "luact.src.meta.ELEMENT"
+
+local typeOptional = require "luact.src.types.optional"
+local typeExcept = require "luact.src.types.except"
+local typeTable = require "luact.src.types.table"
+local typeElement = require "luact.src.types.element"
+
+local exceptTable = typeExcept(typeTable)
+local optionalTable = typeOptional(typeTable)
+
+local function compareComponent(old, new)
+  if (typeElement(old)) then
+    if (typeElement(new)) then
+      return ELEMENT[old] ~= ELEMENT[new]
+    end
+  end
+  return true
+end
+
+local function compareProps(old, new)
+	local oldProps = old.props
+	local newProps = new.props
+	--[[
+		Compare new properties to old one
+	--]]
+	for k, v in pairs(newProps) do
+		--[[
+			check if attribute does not exist from old props
+		--]]
+		if (k ~= "children" and oldProps[k] ~= v) then
+			return true
+		end
+	end
+	return false
+end
+
+local function compareWithoutChildren(old, new)
+  return compareComponent(old, new) and compareProps(old, new)
+end
+
+local function compareChildren(old, new)
+  local oldChildren = old.props.children
+  local newChildren = new.props.children
+  --[[
+		Check if the new children is the same as the old children
+		by reference (or by value)
+	--]]
+	if (oldChildren == newChildren) then
+		return false
+	end
+	--[[
+		Compare children as any non-table value
+	--]]
+	if (exceptTable(oldChildren)) then
+		if (exceptTable(newChildren)) then
+			return oldChildren ~= newChildren
+		else
+			return true
+		end
+	end
+	--[[
+		Compare children as a node
+	--]]
+	if (typeElement(oldChildren)) then
+		if (typeElement(newChildren)) then
+			if (compareWithoutChildren(oldChildren, newChildren)) then
+				return true
+			end
+			return compareChildren(oldChildren, newChildren)
+		end
+	end
+	--[[
+		Compare children as list of children
+	--]]
+	for k, v in pairs(newChildren) do
+    local newChild = v
+    local oldChild = oldChildren[k]
+    
+    if (oldChild) then
+      if (compareWithoutChildren(oldChild, newChild)) then
+        return true
+      end
+      if (compareChildren(oldChild, newChild)) then
+        return true
+      end
+    else
+      return true
+    end
+  end
+	return false
+end
 
 return function (node, parent, index, root)
-	assert(is(node), ".render: node must be a Luact element")
+	assert(typeElement(node), "luact.render: node must be a Luact element")
+  assert(optionalTable(parent), "luact.render: parent must be a Luact element or a table")
+  assert(optionalTable(root), "luact.render: root must be a table.")
 	root = root or parent
 	--[[
 		Deconstruct node
 	--]]
-	local renderer = node.renderer
-	local props = node.props or {}
-	local children = node.children or {}
+  local props = node.props
 	
 	--[[
 		Determine node indentifier
 	--]]
 	local key = props.key or index or 1
 	props.key = key
-	--[[
-		Check if parent has nodes
-	--]]
-	local nodes = parent.nodes
 	
+  local nodes = parent.nodes
 	--[[
 		Check if parent has nodes already
 	--]]
@@ -53,131 +141,54 @@ return function (node, parent, index, root)
 			Get the corresponding rendered node
 		--]]
 		local renderedNode = nodes[key]
-		if (renderedNode == nil) then
-			--[[
-				Request a re-render
-			--]]
-			return requestRender(node, parent, root)
-		end
-			
-		--[[
-			Check if node has the same renderer
-		--]]
-		if (renderedNode.renderer == renderer) then
-			--[[
-				Get properties
-			--]]
-			local renderedProps = renderedNode.props
-			local renderedChildren = renderedNode.children
-			
-			--[[
-				Compare new properties to old one
-			--]]
-			for k, v in pairs(props) do
-				--[[
-					check if attribute does not exist from old props
-				--]]
-				if (renderedProps[k] ~= v) then
-					--[[
-						Request a re-render
-					--]]
-					return requestRender(node, parent, root)
-				end
-			end
-			
-			--[[
-				Compare children
-			--]]
-			local function compare(old, new)
-				--[[
-					Check if left is a new child
-				--]]
-				if (old == nil) then
-					return true
-				end
-				--[[
-					Check if both child has different renderer
-				--]]
-				if (new.renderer ~= old.renderer) then
-					return true
-				end
-				--[[
-					Check if both child has different keys
-				--]]
-				local oldProps = old.props
-				local newProps = new.props
-				if (oldProps == nil) then
-					return true
-				end
-				if (newProps.key ~= oldProps.key) then
-					return true
-				end
-			end
-			
-			--[[
-				Check if the old node is a string
-			--]]
-			if (type(renderedChildren) == "string") then
-				--[[
-					Check if the new node is a string
-				--]]
-				if (type(children) == "string") then
-					if (renderedChildren ~= children) then
-						return requestRender(node, parent, root)
-					end
-				else
-					return requestRender(node, parent, root)
-				end
-			end
-			--[[
-				Check if children is a node
-			--]]
-			if (is(renderedChildren)) then
-				--[[
-					Check if the new children is a node
-				--]]
-				if (is(children)) then
-					if (compare(renderedChildren, children)) then
-						forceUnmount(renderedChildren, root)
-						return requestRender(node, parent, root)
-					end
-				else
-					forceUnmount(renderedChildren, root)
-					return requestRender(node, parent, root)
-				end
-			end
-			--[[
-				Check if children is a node list
-			--]]
-			if (type(renderedChildren) == "table") then
-				--[[
-					Check if the new children is a node list
-				--]]
-				if (type(children) == "table") then
-					for i = 1, #children do
-						local new = children[i]
-						local old = renderedChildren[i]
-						if (compare(old, new)) then
-							forceUnmount(old, root)
-							return requestRender(node, parent, root)
-						end
-					end
-				else
-					return requestRender(node, parent, root)
-				end
-			end
-			
-			return requestRender(node, parent, root)
-		else
-			--[[
-				Unmount rendered node
-			--]]
-			unmount(renderedNode, parent, key)
-			--[[
-				Request a re-render
-			--]]
-			return requestRender(node, parent, root)
-		end
+    
+    if (renderedNode == nil) then
+      --[[
+        Initialize state
+      --]]
+      states.new(node)
+      return requestRender(node, parent, root)
+    end
+		
+    if (typeElement(renderedNode)) then
+      if (compareComponent(renderedNode, node)) then
+        --[[
+          Unmount rendered node
+        --]]
+        unmount(renderedNode, parent, key)
+        --[[
+          Initialize state
+        --]]
+        states.new(node)
+        --[[
+          Request a re-render
+        --]]
+        return requestRender(node, parent, root)
+      end
+
+      if (compareProps(renderedNode, node)) then
+        --[[
+          Initialize state
+        --]]
+        states.share(renderedNode, node)
+        --[[
+          Request a re-render
+        --]]
+        return requestRender(node, parent, root)
+      end
+      
+      
+      if (compareChildren(renderedNode, node)) then
+        --[[
+          Initialize state
+        --]]
+        states.share(renderedNode, node)
+        --[[
+          Request a re-render
+        --]]
+        return requestRender(node, parent, root)
+      end
+    end
 	else
 		--[[
 			Initialize nodes
@@ -186,7 +197,7 @@ return function (node, parent, index, root)
 		--[[
 			Initialize state
 		--]]
-		node.state = {}
+		states.new(node)
 		return requestRender(node, parent, root)
 	end
 end

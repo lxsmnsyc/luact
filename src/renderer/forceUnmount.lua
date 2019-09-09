@@ -28,7 +28,6 @@ return function (node, root)
 	
 	local parent = findParent(node, root)
 	if (parent) then
-		print("WTFFF")
 		unmount(node, parent)
 	end
 end

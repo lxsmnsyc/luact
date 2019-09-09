@@ -19,44 +19,38 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local typeElement = require "luact.src.types.element"
-local typeFunction = require "luact.src.types.func"
+local stack = {}
+local level = 0
+local active
+local current
 
-local CLEANUP = require "luact.src.meta.CLEANUP"
-local VALID = require "luact.src.meta.VALID"
 
-local states = require "luact.src.state"
+local function setContext(value)
+	level = level + 1
+  stack[level] = current
+	active = true
+	current = value
+end
 
-local function checkCleanupCall(state)
-  local callable = state.call
-  if (state and CLEANUP[state] == VALID and typeFunction(callable)) then
-    callable()
+local function resetContext()
+	current = stack[level]
+  level = level - 1
+  if (level == 0) then
+    active = false
   end
 end
---[[
-	Unmounts a Luact node from its parent
---]]
-local function unmount(node, parent, key)
-	assert(typeElement(node), "luact.unmount: node must be a Luact element")
-	--[[
-		Call all cleanup functions
-	--]]
-	local state = states.get(node)
-	for i = 1, #state do
-		checkCleanupCall(state[i])
-	end
-  states.new(node)
-	--[[
-		Unmount each children
-	--]]
-  local children = node.nodes
-	for k, v in pairs(children) do
-    if (typeElement(v)) then
-      unmount(v, node)
-    end
-	end
-	
-  parent.nodes[key or node.props.key or 1] = nil
+
+local function getContext()
+	return current
 end
 
-return unmount
+local function isActive()
+	return active
+end
+
+return {
+	setContext = setContext,
+	resetContext = resetContext,
+	getContext = getContext,
+	isActive = isActive,
+}
