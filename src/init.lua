@@ -20,8 +20,18 @@
     SOFTWARE.
 --]]
 
---[[
-	Used by Luact Components to distinguish them
-	as is
---]]
-return {}
+return {
+  render = require "luact.src.renderer.render",
+
+  hooks = require "luact.src.hooks",
+  types = require "luact.src.types",
+  component = require "luact.src.component",
+  future = require "luact.src.future",
+
+  context = require "luact.src.components.context",
+  provider = require "luact.src.components.provider",
+
+  love = require "luact.src.extensions.love-2d",
+
+  nodeToString = require "luact.src.utils.nodeToString",
+}
