@@ -1,55 +1,103 @@
-local el = require "luact.src.el"
+local luact = require "luact.src"
 
-local render = require "luact.src.renderer.render"
-local useState = require "luact.src.hooks.useState"
-local scheduler = require "luact.src.scheduler"
+local container = {}
 
-local function div(props, children)
-	return {
-		element = "div",
-		props = props,
-		children = children,
-	}
-end
+local DraggableBox = luact.component("DraggableBox", function (props)
+  local inside, setInside = luact.hooks.useState(false)
+  local offsX, setOffsX = luact.hooks.useState(0)
+  local offsY, setOffsY = luact.hooks.useState(0)
+  local down, setDown = luact.hooks.useState(false)
 
-local function App(props, children)
-	local counter, setCounter = useState(0)
-	setCounter(1)
-	setCounter(2)
-	setCounter(3)
-	setCounter(4)
-	
-	print(counter)
-	return {
-		el(div, {}, "Counter value: "..counter),
-		el(div, {}, "Next value: "..(counter + 1)),
-	}
-end
+  return {
+    luact.love.components.RectangularSensor {
+      x = offsX + props.x,
+      y = offsY + props.y,
+      width = 100,
+      height = 100,
+      onMousePressed = function ()
+        setDown(true)
+      end,
+      onMouseReleased = function ()
+        setDown(false)
+      end,
+      onMouseMoved = function (x, y, dx, dy)
+        if (down) then
+          setOffsX(offsX + dx)
+          setOffsY(offsY + dy)
+        end
+      end,
+    },
+    luact.love.components.Rectangle {
+      mode = "fill",
+      x = offsX + props.x,
+      y = offsY + props.y,
+      width = 100,
+      height = 100
+    }
+  }
+end)
 
-local function Container()
-	return {}
-end
+local TwoBox = luact.component("TwoBox", function ()
+  return {
+    luact.love.components.Color {
+      value = 0x00FF00FF,
+      children = DraggableBox {
+        x = 100,
+        y = 100,
+      }
+    },
+    luact.love.components.Color {
+      value = 0xFF0000FF,
+      children = DraggableBox {
+        x = 300,
+        y = 300,
+      }
+    },
+  }
+end)
 
-local container = el(Container, {}, {})
-render(el(App, {}, {}), container)
+local LineTest = luact.component("LineTest", function ()
+  return {
+    luact.love.components.LineStyle {
+      value = "rough",
+      children = {
+        luact.love.components.Line {
+          points = {
+            { x = 300, y = 300 },
+            { x = 400, y = 300 },
+            { x = 400, y = 400 },
+            { x = 300, y = 400 },
+          }
+        },
+        luact.love.components.LineWidth {
+          value = 10,
+          children = luact.love.components.Line {
+            points = {
+              { x = 0, y = 0 },
+              { x = 100, y = 0 },
+              { x = 100, y = 100 },
+              { x = 0, y = 100 },
+            }
+          }
+        },
+        luact.love.components.Line {
+          points = {
+            { x = 100, y = 100 },
+            { x = 200, y = 100 },
+            { x = 200, y = 200 },
+            { x = 100, y = 200 },
+          }
+        }
+      }
+    }
+  }
+end)
+
+local App = luact.component("App", function ()
+  return LineTest()
+end)
 
 
-local function logTable(tbl, lvl)
-	local s = "{"
-	for k, v in pairs(tbl) do
-		local result
-		if (type(v) == "table") then
-			result = logTable(v, lvl + 1)
-		else
-			result = tostring(v)
-		end
-		s = s.."\n"..string.rep("  ", lvl + 1)..k..": "..result..","
-	end
-	s = s.."\n"..string.rep("  ", lvl).."}"
-	return s
-end
+luact.render(App(), container)
 
-print(logTable(container, 0))
-scheduler.drain()
-print(logTable(container, 0))
-
+luact.love.start(container)
