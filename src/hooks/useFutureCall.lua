@@ -21,11 +21,8 @@
 --]]
 local renderContext = require "luact.src.renderer.context"
 
-local Future = require "luact.src.future"
-
-local CLEANUP = require "luact.src.meta.CLEANUP"
-local EFFECT = require "luact.src.meta.EFFECT"
-local VALID = require "luact.src.meta.VALID"
+local useEffect = require "luact.src.hooks.useEffect"
+local useFutureFn = require "luact.src.hooks.useFutureFn"
 
 local typeFunction = require "luact.src.types.func"
 local typeTable = require "luact.src.types.table"
@@ -34,56 +31,17 @@ local typeOptional = require "luact.src.types.optional"
 local optionalTable = typeOptional(typeTable)
 
 return function (callback, dependencies)
-  assert(renderContext.isActive(), "useEffect: illegal lifecycle access")
-  assert(typeFunction(callback), "useEffect: callback must be a function.")
-  assert(optionalTable(dependencies), "useEffect: dependencies must be a table.")
+  assert(renderContext.isActive(), "useFutureCall: illegal lifecycle access")
+  assert(typeFunction(callback), "useFutureCall: callback must be a function.")
+  assert(optionalTable(dependencies), "useFutureCall: dependencies must be a table.")
 
-  local context = renderContext.getContext()
+  local state, futureCallback = useFutureFn(callback, dependencies, {
+    loading = true
+  })
   
-  local node = context.node
-  local root = context.root
-  local parent = context.parent
+  useEffect(function ()
+    futureCallback()
+  end, { futureCallback })
 
-  local state = context.state
-  
-  local depIndex = context.index + 1
-  local cleanupIndex = context.index + 2
-  context.index = cleanupIndex
-
-  local dep = state[depIndex]
-  local cleanup = state[cleanupIndex]
-  
-  local function compareDependencies(old, new)
-    if (old == nil or new == nil) then
-      return true
-    end
-
-    if (#old ~= #new) then
-      return true
-    end
-    
-    for i = 1, #old do
-      if (old[i] ~= new[i]) then
-        return true
-      end
-    end
-    return false
-  end
-
-  if (compareDependencies(dep, dependencies)) then
-    state[depIndex] = dependencies
-    if (cleanup and type(cleanup.call) == "function") then
-      cleanup.call()
-    end
-
-    Future.new(function ()
-      local cleanupNode = {
-        call = callback()
-      }
-
-      CLEANUP[cleanupNode] = VALID
-
-      state[cleanupIndex] = cleanupNode
-    end)
-  end
+  return state
 end

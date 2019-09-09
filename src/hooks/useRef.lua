@@ -24,29 +24,19 @@ local renderContext = require "luact.src.renderer.context"
 local Future = require "luact.src.future"
 
 return function (initialValue)
-  assert(renderContext.isActive(), "useState: illegal state access")
+  assert(renderContext.isActive(), "useRef: illegal state access")
   local context = renderContext.getContext()
   
   local node = context.node
-  local root = context.root
-  local parent = context.parent
   
   local state = context.state
   local index = context.index + 1
   context.index = index
 
   if (state[index] == nil) then
-    state[index] = initialValue
+    state[index] = {
+      current = initialValue
+    }
   end
-
-  local value = state[index]
-
-  return value, function (newValue)
-    if (newValue ~= value) then
-      state[index] = newValue
-      Future.new(function ()
-        requestRender(node, parent, root)
-      end)
-    end
-  end
+  return state[index]
 end

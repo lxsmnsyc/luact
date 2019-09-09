@@ -24,8 +24,10 @@ local renderContext = require "luact.src.renderer.context"
 local Future = require "luact.src.future"
 
 local CLEANUP = require "luact.src.meta.CLEANUP"
-local EFFECT = require "luact.src.meta.EFFECT"
+local LAYOUT_EFFECT = require "luact.src.meta.LAYOUT_EFFECT"
 local VALID = require "luact.src.meta.VALID"
+
+local nodeToString = require "luact.src.utils.nodeToString"
 
 local typeFunction = require "luact.src.types.func"
 local typeTable = require "luact.src.types.table"
@@ -75,8 +77,8 @@ return function (callback, dependencies)
     if (cleanup and type(cleanup.call) == "function") then
       cleanup.call()
     end
-
-    Future.new(function ()
+    
+    local function effect()
       local cleanupNode = {
         call = callback()
       }
@@ -84,6 +86,9 @@ return function (callback, dependencies)
       CLEANUP[cleanupNode] = VALID
 
       state[cleanupIndex] = cleanupNode
-    end)
+    end
+    
+    LAYOUT_EFFECT[effect] = VALID
+    state[cleanupIndex] = effect
   end
 end

@@ -19,34 +19,29 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local requestRender = require "luact.src.renderer.requestRender"
 local renderContext = require "luact.src.renderer.context"
+
 local Future = require "luact.src.future"
 
-return function (initialValue)
-  assert(renderContext.isActive(), "useState: illegal state access")
-  local context = renderContext.getContext()
-  
-  local node = context.node
-  local root = context.root
-  local parent = context.parent
-  
-  local state = context.state
-  local index = context.index + 1
-  context.index = index
+local useRefMounted = require "luact.src.hooks.useRefMounted"
+local useCallback = require "luact.src.hooks.useCallback"
 
-  if (state[index] == nil) then
-    state[index] = initialValue
-  end
-
-  local value = state[index]
-
-  return value, function (newValue)
-    if (newValue ~= value) then
-      state[index] = newValue
-      Future.new(function ()
-        requestRender(node, parent, root)
-      end)
-    end
-  end
+return function (future)
+  assert(renderContext.isActive(), "useFuture: illegal  access")
+  local mounted = useRefMounted()
+  return useCallback(function (future)
+    return Future.new(function (resolve, reject)
+      local function onResolve(value)
+        if (mounted.current) then
+          resolve(value)
+        end
+      end
+      local function onReject(value)
+        if (mounted.current) then
+          reject(value)
+        end
+      end
+      future:andThen(onResolve, onReject)
+    end)
+  end, {})
 end

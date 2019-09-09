@@ -19,34 +19,41 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local requestRender = require "luact.src.renderer.requestRender"
 local renderContext = require "luact.src.renderer.context"
-local Future = require "luact.src.future"
 
-return function (initialValue)
-  assert(renderContext.isActive(), "useState: illegal state access")
-  local context = renderContext.getContext()
+local Event = require "luact.src.event"
+
+local useRef = require "luact.src.hooks.useRef"
+local useMount = require "luact.src.hooks.useMount"
+local useUpdate = require "luact.src.hooks.useUpdate"
+local useUnmount = require "luact.src.hooks.useUnmount"
+
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (ev, callback, dependencies)
+  assert(renderContext.isActive(), "useEvent: illegal access")
+  assert(getmetatable(ev) == Event, "useEvent: event must be an Event instance.")
+  assert(typeFunction(callback), "useEvent: callback must be a function.")
+  assert(optionalTable(dependencies), "useEvent: dependencies must be a table.")
+
+  local ref = useRef(callback)
   
-  local node = context.node
-  local root = context.root
-  local parent = context.parent
+  local node = renderContext.getContext().node
   
-  local state = context.state
-  local index = context.index + 1
-  context.index = index
+  useMount(function ()
+    ev:addListener(ref.current)
+  end)
 
-  if (state[index] == nil) then
-    state[index] = initialValue
-  end
+  useUpdate(function ()
+    ev:swapListener(ref.current, callback)
+    ref.current = callback
+  end, { callback, unpack(dependencies) })
 
-  local value = state[index]
-
-  return value, function (newValue)
-    if (newValue ~= value) then
-      state[index] = newValue
-      Future.new(function ()
-        requestRender(node, parent, root)
-      end)
-    end
-  end
+  useUnmount(function ()
+    ev:removeListener(ref.current)
+  end)
 end

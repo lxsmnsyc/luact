@@ -21,12 +21,6 @@
 --]]
 local renderContext = require "luact.src.renderer.context"
 
-local Future = require "luact.src.future"
-
-local CLEANUP = require "luact.src.meta.CLEANUP"
-local EFFECT = require "luact.src.meta.EFFECT"
-local VALID = require "luact.src.meta.VALID"
-
 local typeFunction = require "luact.src.types.func"
 local typeTable = require "luact.src.types.table"
 local typeOptional = require "luact.src.types.optional"
@@ -34,9 +28,9 @@ local typeOptional = require "luact.src.types.optional"
 local optionalTable = typeOptional(typeTable)
 
 return function (callback, dependencies)
-  assert(renderContext.isActive(), "useEffect: illegal lifecycle access")
-  assert(typeFunction(callback), "useEffect: callback must be a function.")
-  assert(optionalTable(dependencies), "useEffect: dependencies must be a table.")
+  assert(renderContext.isActive(), "useMemo: illegal lifecycle access")
+  assert(typeFunction(callback), "useMemo: callback must be a function.")
+  assert(optionalTable(dependencies), "useMemo: dependencies must be a table.")
 
   local context = renderContext.getContext()
   
@@ -47,14 +41,14 @@ return function (callback, dependencies)
   local state = context.state
   
   local depIndex = context.index + 1
-  local cleanupIndex = context.index + 2
-  context.index = cleanupIndex
+  local memoIndex = context.index + 2
+  context.index = memoIndex
 
   local dep = state[depIndex]
-  local cleanup = state[cleanupIndex]
+  local memo = state[memoIndex]
   
   local function compareDependencies(old, new)
-    if (old == nil or new == nil) then
+    if (old == nil) then
       return true
     end
 
@@ -67,23 +61,16 @@ return function (callback, dependencies)
         return true
       end
     end
+    
     return false
   end
 
   if (compareDependencies(dep, dependencies)) then
     state[depIndex] = dependencies
-    if (cleanup and type(cleanup.call) == "function") then
-      cleanup.call()
-    end
-
-    Future.new(function ()
-      local cleanupNode = {
-        call = callback()
-      }
-
-      CLEANUP[cleanupNode] = VALID
-
-      state[cleanupIndex] = cleanupNode
-    end)
+    
+    memo = callback()
+    state[memoIndex] = memo
   end
+  
+  return memo
 end

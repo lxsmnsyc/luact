@@ -19,34 +19,31 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local requestRender = require "luact.src.renderer.requestRender"
-local renderContext = require "luact.src.renderer.context"
-local Future = require "luact.src.future"
+local directory = "luact.src.hooks"
 
-return function (initialValue)
-  assert(renderContext.isActive(), "useState: illegal state access")
-  local context = renderContext.getContext()
-  
-  local node = context.node
-  local root = context.root
-  local parent = context.parent
-  
-  local state = context.state
-  local index = context.index + 1
-  context.index = index
-
-  if (state[index] == nil) then
-    state[index] = initialValue
-  end
-
-  local value = state[index]
-
-  return value, function (newValue)
-    if (newValue ~= value) then
-      state[index] = newValue
-      Future.new(function ()
-        requestRender(node, parent, root)
-      end)
-    end
-  end
+local function load(hook)
+  return require(directory.."."..hook)
 end
+
+return {
+  useCallback = load("useCallback"),
+  useEffect = load("useEffect"),
+  useEffectOnce = load("useEffectOnce"),
+  useEvent = load("useEvent"),
+  useForceUpdate = load("useForceUpdate"),
+  useFuture = load("useFuture"),
+  useFutureCall = load("useFutureCall"),
+  useFutureFn = load("useFutureFn"),
+  useGetSet = load("useGetSet"),
+  useMemo = load("useMemo"),
+  useMount = load("useMount"),
+  usePrevious = load("usePrevious"),
+  useReducer = load("useReducer"),
+  useRef = load("useRef"),
+  useRefMounted = load("useRefMounted"),
+  useState = load("useState"),
+  useToggle = load("useToggle"),
+  useUnmount = load("useUnmount"),
+  useUpdate = load("useUpdate"),
+  useWhyDidYouUpdate = load("useWhyDidYouUpdate"),
+}

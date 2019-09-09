@@ -19,34 +19,17 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local requestRender = require "luact.src.renderer.requestRender"
 local renderContext = require "luact.src.renderer.context"
-local Future = require "luact.src.future"
 
-return function (initialValue)
-  assert(renderContext.isActive(), "useState: illegal state access")
-  local context = renderContext.getContext()
-  
-  local node = context.node
-  local root = context.root
-  local parent = context.parent
-  
-  local state = context.state
-  local index = context.index + 1
-  context.index = index
+local useEffectOnce = require "luact.src.hooks.useEffectOnce"
 
-  if (state[index] == nil) then
-    state[index] = initialValue
-  end
+local typeFunction = require "luact.src.types.func"
 
-  local value = state[index]
+return function (callback)
+  assert(renderContext.isActive(), "useUnmount: illegal unmount lifecycle access")
+  assert(typeFunction(callback), "useUnmount: callback must be a function.")
 
-  return value, function (newValue)
-    if (newValue ~= value) then
-      state[index] = newValue
-      Future.new(function ()
-        requestRender(node, parent, root)
-      end)
-    end
-  end
+  useEffectOnce(function ()
+    return callback
+  end)
 end

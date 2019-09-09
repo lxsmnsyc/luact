@@ -21,11 +21,11 @@
 --]]
 local renderContext = require "luact.src.renderer.context"
 
-local Future = require "luact.src.future"
+local useState = require "luact.src.hooks.useState"
+local useCallback = require "luact.src.hooks.useCallback"
+local useRefMounted = require "luact.src.hooks.useRefMounted"
 
-local CLEANUP = require "luact.src.meta.CLEANUP"
-local EFFECT = require "luact.src.meta.EFFECT"
-local VALID = require "luact.src.meta.VALID"
+local Future = require "luact.src.future"
 
 local typeFunction = require "luact.src.types.func"
 local typeTable = require "luact.src.types.table"
@@ -33,57 +33,38 @@ local typeOptional = require "luact.src.types.optional"
 
 local optionalTable = typeOptional(typeTable)
 
-return function (callback, dependencies)
-  assert(renderContext.isActive(), "useEffect: illegal lifecycle access")
-  assert(typeFunction(callback), "useEffect: callback must be a function.")
-  assert(optionalTable(dependencies), "useEffect: dependencies must be a table.")
-
-  local context = renderContext.getContext()
+return function (callback, dependencies, initialState)
+  assert(renderContext.isActive(), "useFutureFn: illegal lifecycle access")
+  assert(typeFunction(callback), "useFutureFn: callback must be a function.")
+  assert(optionalTable(dependencies), "useFutureFn: dependencies must be a table.")
   
-  local node = context.node
-  local root = context.root
-  local parent = context.parent
-
-  local state = context.state
+  local state, setState = useState(initialState or { loading = false })
   
-  local depIndex = context.index + 1
-  local cleanupIndex = context.index + 2
-  context.index = cleanupIndex
-
-  local dep = state[depIndex]
-  local cleanup = state[cleanupIndex]
+  local mounted = useRefMounted()
   
-  local function compareDependencies(old, new)
-    if (old == nil or new == nil) then
-      return true
-    end
-
-    if (#old ~= #new) then
-      return true
-    end
+  local futureCallback = useCallback(function (...)
+    setState({ loading = true })
     
-    for i = 1, #old do
-      if (old[i] ~= new[i]) then
-        return true
+    local futureResult = callback(...)
+    
+    assert(getmetatable(futureResult) == Future, "useFutureFn: callback must return a Future.")
+    
+    local function onResolve(value)
+      if (mounted.current) then
+        setState({ value = value, loading = false })
       end
-    end
-    return false
-  end
-
-  if (compareDependencies(dep, dependencies)) then
-    state[depIndex] = dependencies
-    if (cleanup and type(cleanup.call) == "function") then
-      cleanup.call()
+      return value
     end
 
-    Future.new(function ()
-      local cleanupNode = {
-        call = callback()
-      }
+    local function onReject(value)
+      if (mounted.current) then
+        setState({ err = value, loading = false })
+      end
+      return value
+    end
 
-      CLEANUP[cleanupNode] = VALID
+    return futureResult:andThen(onResolve, onReject)
+  end, dependencies)
 
-      state[cleanupIndex] = cleanupNode
-    end)
-  end
+  return state, futureCallback
 end
