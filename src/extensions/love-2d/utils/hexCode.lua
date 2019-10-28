@@ -31,5 +31,5 @@ return function (code)
   local b = floor(code / 0x00000100) % 0x100
   local a = floor(code / 0x00000001) % 0x100
   
-  return r, g, b, a
+  return r / 255, g / 255, b / 255, a / 255
 end
