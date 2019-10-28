@@ -21,6 +21,14 @@
 --]]
 local weakmap = require "luact.src.utils.weakmap"
 
+--[[
+  Maximum time to finish all futures
+  
+  Futures who are pass the DEADLINE mark is deferred
+  to the next cycle.
+--]]
+local DEADLINE = 1./60.
+
 local Future = {}
 Future.__index = Future
 
@@ -175,14 +183,48 @@ function Future:andThen(onFulfill, onReject)
   end
 end
 
-function Future.drain()
+local lastIndex = 1
+
+local function resetTasks()
+  tasks = {}
+  tasksCount = 0
+  lastIndex = 1
+end
+
+local function type1Drain()
   local i = 1
   while (i <= tasksCount) do
     tasks[i]()
     i = i + 1
   end
-  tasks = {}
-  tasksCount = 0
+  resetTasks()
 end
+
+local function type2Drain(deadline)
+  local start = os.clock()
+  deadline = deadline or DEADLINE
+  local i = lastIndex
+  while (i <= tasksCount) do
+    tasks[i]()
+    i = i + 1
+    if ((os.clock() - start) >= deadline and i <= tasksCount) then
+      lastIndex = i
+      return
+    end
+  end
+  resetTasks()
+end
+
+function Future.drain(deadline, typeDrain)
+  typeDrain = typeDrain or 1
+  if (typeDrain == 1) then
+    type1Drain()
+  end
+  if (typeDrain == 2) then
+    type2Drain(deadline)
+  end
+end
+
+Future.DEADLINE = DEADLINE
 
 return Future
