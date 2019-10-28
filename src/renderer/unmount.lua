@@ -22,6 +22,7 @@
 local typeElement = require "luact.src.types.element"
 local typeFunction = require "luact.src.types.func"
 
+local PARENT = require "luact.src.meta.PARENT"
 local CLEANUP = require "luact.src.meta.CLEANUP"
 local VALID = require "luact.src.meta.VALID"
 
@@ -57,6 +58,7 @@ local function unmount(node, parent, key)
 	end
 	
   parent.nodes[key or node.props.key or 1] = nil
+  PARENT[node] = nil
 end
 
 return unmount
