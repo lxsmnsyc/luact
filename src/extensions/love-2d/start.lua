@@ -24,8 +24,17 @@ local Future = require "luact.src.future"
 local LoveEvent = require "luact.src.extensions.love-2d.event"
 local nodeToString = require "luact.src.utils.nodeToString"
 local evaluate = require "luact.src.utils.evaluate"
+
 local typeTable = require "luact.src.types.table"
 local typeFunction = require "luact.src.types.func"
+local typeElementOfType =  require "luact.src.types.elementOfType"
+
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local DrawElement = typeElementOfType(Draw)
+
+local NAMES = require "luact.src.meta.NAMES"
+local ELEMENT = require "luact.src.meta.ELEMENT"
 
 local started = false
 return function (container)
@@ -42,39 +51,35 @@ return function (container)
   local DirectoryDropped = LoveEvent.DirectoryDropped
   function love.directorydropped(path)
     DirectoryDropped:dispatch(path)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
     Callback function used to draw on the screen every frame.
   --]]
   local Draw = LoveEvent.Draw
+  
+  --
   function love.draw()
     Draw:dispatch()
     evaluate(
       container,
       function (node)
-        if (typeTable(node.nodes)) then
-          node = node.nodes
-          if (typeFunction(node.beforeDraw)) then
-            node.beforeDraw()
-          end
-          if (typeFunction(node.draw)) then
-            node.draw()
-          end
+        if (DrawElement(node)) then
+          local props = node.props
+          props.before()
+          props.on()
         end
       end,
       function (node)
-        if (typeTable(node.nodes)) then
-          node = node.nodes
-          if (typeFunction(node.afterDraw)) then
-            node.afterDraw()
-          end
+        if (DrawElement(node)) then 
+          node.props.after()
         end
       end
     )
-    Future.drain()
+    Future.drain(nil, 1)
   end
+  --
   
   --[[
   function love.draw()
@@ -87,7 +92,7 @@ return function (container)
   local ErrHand = LoveEvent.ErrHand
   function love.errhand(msg)
     ErrHand:dispatch(msg)
-    Future.drain()
+    
   end
   
   --]]
@@ -98,7 +103,7 @@ return function (container)
   local FileDropped = LoveEvent.FileDropped
   function love.filedropped(file)
     FileDropped:dispatch(file)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -108,7 +113,7 @@ return function (container)
   local Focus = LoveEvent.Focus
   function love.focus(focus)
     Focus:dispatch(focus)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -117,7 +122,7 @@ return function (container)
   local GamepadAxis = LoveEvent.GamepadAxis
   function love.gamepadaxis(joystick, axis, value)
     GamepadAxis:dispatch(joystick, axis, value)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -126,7 +131,7 @@ return function (container)
   local GamepadPressed = LoveEvent.GamepadPressed
   function love.gamepadpressed(joystick, button)
     GamePressed:dispatch(joystick, button)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -135,7 +140,7 @@ return function (container)
   local GamepadReleased = LoveEvent.GamepadReleased
   function love.gamepadreleased(joystick, button)
     GamepadReleased:dispatch(joystick, button)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -144,7 +149,7 @@ return function (container)
   local JoystickAdded = LoveEvent.JoystickAdded
   function love.joystickadded(joystick)
     JoystickAdded:dispatch(joystick)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -153,7 +158,7 @@ return function (container)
   local JoystickAxis = LoveEvent.JoystickAxis
   function love.joystickaxis(joystick, axis, value)
     JoystickAxis:dispatch(joystick, axis, value)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -162,7 +167,7 @@ return function (container)
   local JoystickHat = LoveEvent.JoystickHat
   function love.joystickhat(joystick, hat, direction)
     JoystickHat:dispatch(joystick, hat, direction)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -171,7 +176,7 @@ return function (container)
   local JoystickPressed = LoveEvent.JoystickPressed
   function love.joystickpressed(joystick, button)
     JoystickPressed:dispatch(joystick, button)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -180,7 +185,7 @@ return function (container)
   local JoystickReleased = LoveEvent.JoystickReleased
   function love.joystickreleased(joystick, button)
     JoystickReleased:dispatch(joystick, button)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -189,7 +194,7 @@ return function (container)
   local JoystickRemoved = LoveEvent.JoystickRemoved
   function love.joystickremoved(joystick)
     JoystickRemoved:dispatch(joystick)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -198,7 +203,7 @@ return function (container)
   local KeyPressed = LoveEvent.KeyPressed
   function love.keypressed(key, scancode, isrepeat)
     KeyPressed:dispatch(key, scancode, isrepeat)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -207,7 +212,7 @@ return function (container)
   local KeyReleased = LoveEvent.KeyReleased
   function love.keyreleased(key)
     KeyReleased:dispatch(key)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -216,7 +221,7 @@ return function (container)
   local Load = LoveEvent.Load
   function love.load(arg)
     Load:dispatch(arg)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -232,7 +237,7 @@ return function (container)
   local LowMemory = LoveEvent.LowMemory
   function love.lowmemory()
     LowMemory:dispatch()
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -241,7 +246,7 @@ return function (container)
   local MouseFocus = LoveEvent.MouseFocus
   function love.mousefocus(focus)
     MouseFocus:dispatch(focus)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -250,7 +255,7 @@ return function (container)
   local MouseMoved = LoveEvent.MouseMoved
   function love.mousemoved(x, y, dx, dy, istouch)
     MouseMoved:dispatch(x, y, dx, dy, istouch)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -259,7 +264,7 @@ return function (container)
   local MousePressed = LoveEvent.MousePressed
   function love.mousepressed(x, y, button, istouch)
     MousePressed:dispatch(x, y, button, istouch)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -268,7 +273,7 @@ return function (container)
   local MouseReleased = LoveEvent.MouseReleased
   function love.mousereleased(x, y, button, istouch)
     MouseReleased:dispatch(x, y, button, istouch)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -280,7 +285,8 @@ return function (container)
     Quit:dispatch(function ()
       aborted = true
     end)
-    Future.drain()
+    Future.drain(nil, 1)
+    
     return aborted
   end
 
@@ -293,7 +299,7 @@ return function (container)
   local Resize = LoveEvent.Resize
   function love.resize(w, h)
     Resize:dispatch(w, h)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -306,7 +312,7 @@ return function (container)
   local TextEdited = LoveEvent.TextEdited
   function love.textedited(text, start, length)
     TextEdited:dispatch(text, start, length)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -317,7 +323,7 @@ return function (container)
   local TextInput = LoveEvent.TextInput
   function love.textinput(text)
     TextInput:dispatch(text)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -326,7 +332,7 @@ return function (container)
   local ThreadError = LoveEvent.ThreadError
   function love.threaderror(thread, errorstr)
     ThreadError:dispatch(thread, errorstr)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -336,7 +342,7 @@ return function (container)
   local TouchMoved = LoveEvent.TouchMoved
   function love.touchmoved(id, x, y, dx, dy, pressure)
     TouchMoved:dispatch(id, x, y, dx, dy, pressure)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -345,7 +351,7 @@ return function (container)
   local TouchPressed = LoveEvent.TouchPressed
   function love.touchpressed(id, x, y, dx, dy, pressure)
     TouchPressed:dispatch(id, x, y, dx, dy, pressure)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -354,7 +360,7 @@ return function (container)
   local TouchReleased = LoveEvent.TouchReleased
   function love.touchreleased(id, x, y, dx, dy, pressure)
     TouchReleased:dispatch(id, x, y, dx, dy, pressure)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -363,7 +369,7 @@ return function (container)
   local Update = LoveEvent.Update
   function love.update(dt)
     Update:dispatch(dt)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -372,7 +378,7 @@ return function (container)
   local Visible = LoveEvent.Visible
   function love.visible(visible)
     Visible:dispatch(visible)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 
   --[[
@@ -381,6 +387,6 @@ return function (container)
   local WheelMoved = LoveEvent.WheelMoved
   function love.wheelmoved(x, y)
     WheelMoved:dispatch(x, y)
-    Future.drain()
+    Future.drain(nil, 1)
   end
 end
