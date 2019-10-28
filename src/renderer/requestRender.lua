@@ -23,7 +23,7 @@ local RENDERER = require "luact.src.meta.RENDERER"
 local ELEMENT = require "luact.src.meta.ELEMENT"
 local LAYOUT_EFFECT = require "luact.src.meta.LAYOUT_EFFECT"
 local VALID = require "luact.src.meta.VALID"
-
+local PARENT = require "luact.src.meta.PARENT"
 local NAMES = require "luact.src.meta.NAMES"
 
 local context = require "luact.src.renderer.context"
@@ -61,6 +61,7 @@ return function (node, parent, root)
     state = state,
 	})
 	
+  PARENT[node] = parent
 	--[[
 		Render the component
 	--]]
@@ -82,11 +83,12 @@ return function (node, parent, root)
     if (typeElement(childNode)) then
       render(childNode, node, nil, root)
     else
-      for k, v in pairs(childNode) do
+      for i = 1, #childNode do
+        local v = childNode[i]
         if (typeElement(v)) then
-          render(v, node, k, root)
+          render(v, node, i, root)
         else
-          nodes[k] = v
+          nodes[i] = v
         end
       end
     end
@@ -100,7 +102,6 @@ return function (node, parent, root)
   end
 
 	parent.nodes[node.props.key] = node
-  
   --[[
     Start effects
   --]]
