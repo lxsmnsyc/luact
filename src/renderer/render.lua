@@ -53,66 +53,10 @@ local function compareProps(old, new)
 		--[[
 			check if attribute does not exist from old props
 		--]]
-		if (k ~= "children" and oldProps[k] ~= v) then
+		if (oldProps[k] ~= v) then
 			return true
 		end
 	end
-	return false
-end
-
-local function compareWithoutChildren(old, new)
-  return compareComponent(old, new) and compareProps(old, new)
-end
-
-local function compareChildren(old, new)
-  local oldChildren = old.props.children
-  local newChildren = new.props.children
-  --[[
-		Check if the new children is the same as the old children
-		by reference (or by value)
-	--]]
-	if (oldChildren == newChildren) then
-		return false
-	end
-	--[[
-		Compare children as any non-table value
-	--]]
-	if (exceptTable(oldChildren)) then
-		if (exceptTable(newChildren)) then
-			return oldChildren ~= newChildren
-		else
-			return true
-		end
-	end
-	--[[
-		Compare children as a node
-	--]]
-	if (typeElement(oldChildren)) then
-		if (typeElement(newChildren)) then
-			if (compareWithoutChildren(oldChildren, newChildren)) then
-				return true
-			end
-			return compareChildren(oldChildren, newChildren)
-		end
-	end
-	--[[
-		Compare children as list of children
-	--]]
-	for k, v in pairs(newChildren) do
-    local newChild = v
-    local oldChild = oldChildren[k]
-    
-    if (oldChild) then
-      if (compareWithoutChildren(oldChild, newChild)) then
-        return true
-      end
-      if (compareChildren(oldChild, newChild)) then
-        return true
-      end
-    else
-      return true
-    end
-  end
 	return false
 end
 
@@ -167,18 +111,6 @@ return function (node, parent, index, root)
       end
 
       if (compareProps(renderedNode, node)) then
-        --[[
-          Initialize state
-        --]]
-        states.share(renderedNode, node)
-        --[[
-          Request a re-render
-        --]]
-        return requestRender(node, parent, root)
-      end
-      
-      
-      if (compareChildren(renderedNode, node)) then
         --[[
           Initialize state
         --]]
