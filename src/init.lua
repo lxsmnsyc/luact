@@ -30,8 +30,10 @@ return {
 
   context = require "luact.src.components.context",
   provider = require "luact.src.components.provider",
+  Portal = require "luact.src.components.portal",
 
   love = require "luact.src.extensions.love-2d",
 
+  equatable = require "luact.src.utils.equatable",
   nodeToString = require "luact.src.utils.nodeToString",
 }
