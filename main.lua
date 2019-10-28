@@ -94,7 +94,7 @@ local LineTest = luact.component("LineTest", function ()
 end)
 
 local App = luact.component("App", function ()
-  return LineTest()
+  return TwoBox()
 end)
 
 
