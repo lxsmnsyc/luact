@@ -23,6 +23,8 @@ local requestRender = require "luact.src.renderer.requestRender"
 local renderContext = require "luact.src.renderer.context"
 local Future = require "luact.src.future"
 
+local useCallback = require "luact.src.hooks.useCallback"
+
 return function (initialValue)
   assert(renderContext.isActive(), "useState: illegal state access")
   local context = renderContext.getContext()
@@ -33,20 +35,29 @@ return function (initialValue)
   
   local state = context.state
   local index = context.index + 1
-  context.index = index
+  local init = context.index + 2
+  context.index = init
+  
+  local isInit = state[init]
 
-  if (state[index] == nil) then
+  if (not isInit) then
+    state[init] = true
     state[index] = initialValue
   end
 
   local value = state[index]
-
-  return value, function (newValue)
+  
+  local setState = useCallback(function (newValue)
     if (newValue ~= value) then
       state[index] = newValue
+      
       Future.new(function ()
-        requestRender(node, parent, root)
+        if (newValue ~= state[index] or value ~= state[index]) then
+          requestRender(node, parent, root)
+        end
       end)
     end
-  end
+  end, { value })
+
+  return value, setState
 end

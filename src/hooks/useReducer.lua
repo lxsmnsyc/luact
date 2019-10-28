@@ -21,7 +21,7 @@
 --]]
 local renderContext = require "luact.src.renderer.context"
 local useState = require "luact.src.hooks.useState"
-
+local useCallback = require "luact.src.hooks.useCallback"
 local typeFunction = require "luact.src.types.func"
 
 return function (reducer, initialValue)
@@ -29,8 +29,8 @@ return function (reducer, initialValue)
   assert(typeFunction(reducer), "useReducer: reducer must be a function.")
   
   local state, setState = useState(initialValue)
-  
-  return state, function (newValue)
+  local dispatch = useCallback(function (newValue)
     setState(reducer(state, newValue))
-  end
+  end, { state })
+  return state, dispatch
 end

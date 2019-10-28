@@ -24,9 +24,12 @@ local renderContext = require "luact.src.renderer.context"
 local Event = require "luact.src.event"
 
 local useRef = require "luact.src.hooks.useRef"
+local useCallback = require "luact.src.hooks.useCallback"
 local useMount = require "luact.src.hooks.useMount"
 local useUpdate = require "luact.src.hooks.useUpdate"
 local useUnmount = require "luact.src.hooks.useUnmount"
+
+local Equatable = require "luact.src.utils.equatable"
 
 local typeFunction = require "luact.src.types.func"
 local typeTable = require "luact.src.types.table"
@@ -34,26 +37,35 @@ local typeOptional = require "luact.src.types.optional"
 
 local optionalTable = typeOptional(typeTable)
 
-return function (ev, callback, dependencies)
+return function (ev, callback, dependencies, listen)
   assert(renderContext.isActive(), "useEvent: illegal access")
   assert(getmetatable(ev) == Event, "useEvent: event must be an Event instance.")
   assert(typeFunction(callback), "useEvent: callback must be a function.")
   assert(optionalTable(dependencies), "useEvent: dependencies must be a table.")
-
-  local ref = useRef(callback)
   
-  local node = renderContext.getContext().node
+  if (listen == nil) then
+    listen = true
+  end
+
+  local cb = useCallback(function (...)
+    if (listen) then
+      callback(...)
+    end
+  end, { listen, callback, Equatable(dependencies or {}) })
+
+  local ref = useRef(cb)
   
   useMount(function ()
     ev:addListener(ref.current)
   end)
 
   useUpdate(function ()
-    ev:swapListener(ref.current, callback)
-    ref.current = callback
-  end, { callback, unpack(dependencies) })
+    ev:swapListener(ref.current, cb)
+    ref.current = cb
+  end, { cb })
 
   useUnmount(function ()
     ev:removeListener(ref.current)
+    ref.current = nil
   end)
 end

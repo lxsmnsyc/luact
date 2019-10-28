@@ -35,6 +35,8 @@ local typeOptional = require "luact.src.types.optional"
 
 local optionalTable = typeOptional(typeTable)
 
+local Equatable = require "luact.src.utils.equatable"
+
 return function (callback, dependencies)
   assert(renderContext.isActive(), "useEffect: illegal lifecycle access")
   assert(typeFunction(callback), "useEffect: callback must be a function.")
@@ -55,24 +57,9 @@ return function (callback, dependencies)
   local dep = state[depIndex]
   local cleanup = state[cleanupIndex]
   
-  local function compareDependencies(old, new)
-    if (old == nil or new == nil) then
-      return true
-    end
+  dependencies = Equatable(dependencies)
 
-    if (#old ~= #new) then
-      return true
-    end
-    
-    for i = 1, #old do
-      if (old[i] ~= new[i]) then
-        return true
-      end
-    end
-    return false
-  end
-
-  if (compareDependencies(dep, dependencies)) then
+  if (dep ~= dependencies) then
     state[depIndex] = dependencies
     if (cleanup and type(cleanup.call) == "function") then
       cleanup.call()
