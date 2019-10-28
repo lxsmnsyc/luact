@@ -19,16 +19,43 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local directory = "luact.src.components.context"
+local renderContext = require "luact.src.renderer.context"
 
-local function load(name)
-  return require(directory.."."..name)
+local ContextProvider = require "luact.src.components.context.provider"
+
+local typeElementOfType = require "luact.src.types.elementOfType"
+local typeContext = require "luact.src.components.context.type"
+local typeContextProvider = typeElementOfType(ContextProvider)
+
+local defaultValues = require "luact.src.components.context.defaultValues"
+
+local PARENT = require "luact.src.meta.PARENT"
+
+local function findParent(node, root, filter)
+  local parent = PARENT[node]
+  if (parent == root) then
+    return nil
+  end
+  if (filter(parent)) then
+    return parent
+  end
+  return findParent(parent, root, filter)
 end
 
-return {
-  Consumer = load("consumer"),
-  Provider = load("provider"),
-  new = load("new"),
-  type = load("type"),
-  use = load("use"),
-}
+local function contextFilter(context)
+  return function (node)
+    return typeContextProvider(node) and node.props.context == context
+  end
+end
+
+return function (ctx)
+  assert(typeContext(ctx), "Context.use: ctx must be a Context.") 
+  local context = renderContext.getContext()
+  
+  local parent = findParent(context.node, context.root, contextFilter(ctx))
+
+  if (parent) then
+    return parent.props.value
+  end
+  return defaultValues[ctx]
+end

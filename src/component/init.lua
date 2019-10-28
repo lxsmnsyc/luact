@@ -25,6 +25,8 @@ local ELEMENT = require "luact.src.meta.ELEMENT"
 local RENDERER = require "luact.src.meta.RENDERER"
 local COMPONENT = require "luact.src.meta.COMPONENT"
 
+local Equatable = require "luact.src.utils.equatable"
+
 local typeOptional = require "luact.src.types.optional"
 local typeFunction = require "luact.src.types.func"
 local typeString = require "luact.src.types.string"
@@ -40,12 +42,29 @@ return function (name, renderer, propTypes, defaultProps)
   assert(optionalFuncTable(propTypes), "luact.component: propTypes must be a table.")
   assert(optionalTable(defaultProps), "luact.component: defaultProps must be a table.")
   
+  defaultProps = defaultProps or {}
+  
+  if (propTypes) then
+    for k, v in pairs(defaultProps) do
+      local descriptor = propTypes[k]
+      
+      if (descriptor) then
+        assert(descriptor(v), "luact.component."..name..": default value type mismatch (\""..k.."\")")
+      end
+    end
+  end
+
   local function component(props)
     assert(optionalTable(props), "luact.component."..name..": props must be a table.")
-  
+    props = props or {}
+    local cloned = {}
     --[[
       Validate prop types
     --]]
+    for k, v in pairs(props) do
+      cloned[k] = v
+    end
+
     if (propTypes) then
       for k, v in pairs(propTypes) do
         --[[
@@ -63,14 +82,17 @@ return function (name, renderer, propTypes, defaultProps)
           --[[
             type check for value
           --]]
-          assert(descriptor(props[k]), "luact.component."..name..": property mismatch (\""..k.."\")")
-          --[[
-            assign default property value
-          --]]
-          if (value == nil) then
-            props[k] = defaultProps[k]
-          end
+          assert(descriptor(props[k]), "luact.component."..name..": property type mismatch (\""..k.."\")")
         end
+      end
+    end
+
+    for k, v in pairs(defaultProps) do
+      --[[
+        assign default property value
+      --]]
+      if (cloned[k] == nil) then
+        cloned[k] = v
       end
     end
 
@@ -78,8 +100,8 @@ return function (name, renderer, propTypes, defaultProps)
       Create a node associated with a renderer
       and its props
     --]]
-    local node = {
-      props = props or {},
+    local node = Equatable {
+      props = Equatable(cloned),
     }
     
     --[[

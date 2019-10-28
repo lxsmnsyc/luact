@@ -19,16 +19,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local directory = "luact.src.components.context"
+local Context = {}
+Context.__index = Context
 
-local function load(name)
-  return require(directory.."."..name)
-end
-
-return {
-  Consumer = load("consumer"),
-  Provider = load("provider"),
-  new = load("new"),
-  type = load("type"),
-  use = load("use"),
-}
+return Context

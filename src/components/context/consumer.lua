@@ -19,16 +19,23 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local directory = "luact.src.components.context"
+local Component = require "luact.src.component"
 
-local function load(name)
-  return require(directory.."."..name)
+local useContext = require "luact.src.components.context.use"
+
+local typeContext = require "luact.src.components.context.type"
+local typeFunction = require "luact.src.types.func"
+local typeElement = require "luact.src.types.element"
+local typeOptional = require "luact.src.types.optional"
+
+local function ContextConsumer(props)
+  return props.builder(useContext(props.context), props.child)
 end
 
-return {
-  Consumer = load("consumer"),
-  Provider = load("provider"),
-  new = load("new"),
-  type = load("type"),
-  use = load("use"),
+local propTypes = {
+  context = typeContext,
+  builder = typeFunction,
+  child = typeOptional(typeElement),
 }
+
+return Component("Context.Consumer", ContextConsumer, propTypes)

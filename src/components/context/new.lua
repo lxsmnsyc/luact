@@ -19,16 +19,12 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local directory = "luact.src.components.context"
+local Context = require "luact.src.components.context.M"
 
-local function load(name)
-  return require(directory.."."..name)
+local defaultValues = require "luact.src.components.context.defaultValues"
+
+return function (default)
+  local instance = setmetatable({}, Context)
+  defaultValues[instance] = default
+  return instance
 end
-
-return {
-  Consumer = load("consumer"),
-  Provider = load("provider"),
-  new = load("new"),
-  type = load("type"),
-  use = load("use"),
-}

@@ -19,16 +19,8 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local directory = "luact.src.components.context"
+local Context = require "luact.src.components.context.M"
 
-local function load(name)
-  return require(directory.."."..name)
-end
+local typeMetatable = require "luact.src.types.metatable"
 
-return {
-  Consumer = load("consumer"),
-  Provider = load("provider"),
-  new = load("new"),
-  type = load("type"),
-  use = load("use"),
-}
+return typeMetatable(Context)
