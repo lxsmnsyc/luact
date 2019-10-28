@@ -28,6 +28,7 @@ end
 return {
   any = load("any"),
   bool = load("bool"),
+  children = load("children"),
   component = load("component"),
   either = load("either"),
   eitherValues = load("eitherValues"),

@@ -19,13 +19,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local component = require "luact.src.types.component"
-local element = require "luact.src.types.element"
-local ELEMENT = require "luact.src.meta.ELEMENT"
+local typeTableOf = require "luact.src.types.tableOf"
+local typeElement = require "luact.src.types.element"
 
-return function (comp)
-  assert(component(comp), "luact.types.elementOfType: comp must be a luact.component")
-  return function (el)
-    return element(el) and ELEMENT[el] == comp
-  end
-end
+return typeTableOf(typeElement)
