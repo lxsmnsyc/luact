@@ -19,12 +19,34 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local directory = "luact.src.components.provider"
+local Component = require "luact.src.component"
 
-local function load(hook)
-  return require(directory.."."..hook)
+local useMemo = require "luact.src.hooks.useMemo"
+local useValueProvider = require "luact.src.components.provider.value.use"
+
+local typeFunction = require "luact.src.types.func"
+local typeElement = require "luact.src.types.element"
+local typeOptional = require "luact.src.types.optional"
+
+local function Selector(props)
+  local selector = props.selector
+  local builder = props.builder
+  local child = props.child
+  
+  local value = useValueProvider(of)
+  
+  local selected = selector(value)
+
+  return useMemo(function ()
+    return builder(selected, child)
+  end, { selected, child })
 end
 
-return {
-  Value = load("value"),
+local propTypes = {
+  of = typeFunction,
+  selector = typeFunction,
+  builder = typeFunction,
+  child = typeOptional(typeElement),
 }
+
+return Component("Value.Selector", Selector, propTypes)

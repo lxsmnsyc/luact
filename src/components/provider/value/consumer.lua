@@ -24,16 +24,19 @@ local Component = require "luact.src.component"
 local useValueProvider = require "luact.src.components.provider.value.use"
 
 local typeFunction = require "luact.src.types.func"
+local typeElement = require "luact.src.types.element"
+local typeOptional = require "luact.src.types.optional"
 
 local function ValueConsumer(props)
   local value = useValueProvider(props.of)
   
-  return props.builder(value)
+  return props.builder(value, props.child)
 end
 
 local propTypes = {
   of = typeFunction,
   builder = typeFunction,
+  child = typeOptional(typeElement),
 }
 
 return Component("Provider.Value.Consumer", ValueConsumer)

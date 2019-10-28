@@ -21,19 +21,26 @@
 --]]
 local Component = require "luact.src.component"
 
-local Context = require "luact.src.components.context"
-local ValueProviderContext = require "luact.src.components.provider.value.context"
+local typeElement = require "luact.src.types.element"
+local typeChildren = require "luact.src.types.children"
+local typeOptional = require "luact.src.types.optional"
 
 local function ValueProvider(props)
-  local value = props.value
+  local children = props.children
   
-  local values = ValueProviderContext:use() or {}
-
-  return Context.Provider {
-    context = ValueProviderContext,
-    value = { value, unpack(values) },
-    children = props.children
-  }
+  if (children) then
+    return children
+  end
+  
+  local child = props.child
+  if (child) then
+    return child
+  end
 end
+
+local propTypes = {
+  children = typeOptional(typeChildren),
+  child = typeOptional(typeElement),
+}
 
 return Component("Provider.Value", ValueProvider)

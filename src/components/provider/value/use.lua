@@ -19,22 +19,41 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
-local ValueProviderContext = require "luact.src.components.provider.value.context"
+local ValueProvider = require "luact.src.components.provider.value.provider"
 
+local PARENT = require "luact.src.meta.PARENT"
+
+local renderContext = require "luact.src.renderer.context"
+
+local typeElementOfType = require "luact.src.types.elementOfType"
 local typeFunction = require "luact.src.types.func"
+
+local typeValueProvider = typeElementOfType(ValueProvider)
+
+local function findParent(node, root, filter)
+  local parent = PARENT[node]
+  if (parent == root) then
+    return nil
+  end
+  if (filter(parent)) then
+    return parent
+  end
+  return findParent(parent, root, filter)
+end
+
+local function contextFilter(filter)
+  return function (node)
+    return typeValueProvider(node) and filter(node.props.value)
+  end
+end
 
 return function (filter)
   assert(typeFunction(filter), "luact.Provider.useValue: filter must be a function.")
-  local values = ValueProviderContext:use()
+  local context = renderContext.getContext()
+  local parent = findParent(context.node, context.root, contextFilter(filter))
   
-  local value
-  
-  for i = 1, #values do
-    value = values[i]
-    if (filter(value)) then
-      break
-    end
+  if (parent) then
+    return parent.props.value
   end
-  
-  return value
+  return nil
 end
