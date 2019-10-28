@@ -25,9 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local Update = require("luact.src.extensions.love-2d.event").Update
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useFrameUpdate: illegal access")
   assert(type(callback) == "function", "useFrameUpdate: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useFrameUpdate: dependencies must be a table.")
-  useEvent(Update, callback, dependencies)
+  useEvent(Update, callback, dependencies, listen)
 end

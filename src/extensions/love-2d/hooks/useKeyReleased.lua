@@ -25,9 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local KeyReleased = require("luact.src.extensions.love-2d.event").KeyReleased
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useKeyReleased: illegal access")
   assert(type(callback) == "function", "useKeyReleased: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useKeyReleased: dependencies must be a table.")
-  useEvent(KeyReleased, callback, dependencies)
+  useEvent(KeyReleased, callback, dependencies, listen)
 end

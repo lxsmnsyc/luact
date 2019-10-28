@@ -25,10 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local Draw = require("luact.src.extensions.love-2d.event").Draw
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useDraw: illegal access")
-  assert(type(callback) == "function", "useDraw: callback must be a function.")
-  assert(type(dependencies) == "table" or dependencies == nil, "useDraw: dependencies must be a table.")
+  assert(typeFunction(callback), "useDraw: callback must be a function.")
   
-  useEvent(Draw, callback, dependencies)
+  useEvent(Draw, callback, dependencies, listen)
 end

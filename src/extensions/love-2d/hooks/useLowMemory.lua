@@ -25,10 +25,16 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local LowMemory = require("luact.src.extensions.love-2d.event").LowMemory
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useLowMemory: illegal access")
   assert(type(callback) == "function", "useLowMemory: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useLowMemory: dependencies must be a table.")
 
-  useEvent(LowMemory, callback, dependencies)
+  useEvent(LowMemory, callback, dependencies, listen)
 end

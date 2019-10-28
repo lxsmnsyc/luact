@@ -25,10 +25,10 @@ local useEffect = require "luact.src.hooks.useEffect"
 
 local Quit = require("luact.src.extensions.love-2d.event").Quit
 
-return function (callback, dependencies)
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useQuit: illegal access")
   assert(type(callback) == "function", "useQuit: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useQuit: dependencies must be a table.")
   
-  useEvent(Quit, callback, dependencies)
+  useEvent(Quit, callback, dependencies, listen)
 end

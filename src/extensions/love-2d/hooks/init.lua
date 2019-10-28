@@ -56,6 +56,7 @@ return {
   useThreadError = load("useThreadError"),
   useTouchMoved = load("useTouchMoved"),
   useTouchPressed = load("useTouchPressed"),
+  useTween = load("useTween"),
   useVisible = load("useVisible"),
   useWheelMoved = load("useWheelMoved"),
   useWindowSize = load("useWindowSize"),

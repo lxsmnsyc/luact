@@ -25,9 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local TouchMoved = require("luact.src.extensions.love-2d.event").TouchMoved
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useTouchMoved: illegal access")
   assert(type(callback) == "function", "useTouchMoved: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useTouchMoved: dependencies must be a table.")
-  useEvent(TouchMoved, callback, dependencies)
+  useEvent(TouchMoved, callback, dependencies, listen)
 end

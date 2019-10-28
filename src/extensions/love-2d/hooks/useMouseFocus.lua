@@ -25,9 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local MouseFocus = require("luact.src.extensions.love-2d.event").MouseFocus
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useMouseFocus: illegal access")
   assert(type(callback) == "function", "useMouseFocus: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useMouseFocus: dependencies must be a table.")
-  useEvent(MouseFocus, callback, dependencies)
+  useEvent(MouseFocus, callback, dependencies, listen)
 end

@@ -25,9 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local JoystickAxis = require("luact.src.extensions.love-2d.event").JoystickAxis
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useJoystickAxis: illegal access")
   assert(type(callback) == "function", "useJoystickAxis: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useJoystickAxis: dependencies must be a table.")
-  useEvent(JoystickAxis, callback, dependencies)
+  useEvent(JoystickAxis, callback, dependencies, listen)
 end

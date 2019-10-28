@@ -25,9 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local GamepadReleased = require("luact.src.extensions.love-2d.event").GamepadReleased
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useGamepadReleased: illegal access")
   assert(type(callback) == "function", "useGamepadReleased: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useGamepadReleased: dependencies must be a table.")
-  useEvent(GamepadReleased, callback, dependencies)
+  useEvent(GamepadReleased, callback, dependencies, listen)
 end

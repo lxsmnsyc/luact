@@ -25,9 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local TextEdited = require("luact.src.extensions.love-2d.event").TextEdited
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useTextEdited: illegal access")
   assert(type(callback) == "function", "useTextEdited: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useTextEdited: dependencies must be a table.")
-  useEvent(TextEdited, callback, dependencies)
+  useEvent(TextEdited, callback, dependencies, listen)
 end

@@ -25,9 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local TextInput = require("luact.src.extensions.love-2d.event").TextInput
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useTextInput: illegal access")
   assert(type(callback) == "function", "useTextInput: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useTextInput: dependencies must be a table.")
-  useEvent(TextInput, callback, dependencies)
+  useEvent(TextInput, callback, dependencies, listen)
 end

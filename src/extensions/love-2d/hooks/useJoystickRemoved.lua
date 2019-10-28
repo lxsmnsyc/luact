@@ -25,9 +25,15 @@ local useEvent = require "luact.src.hooks.useEvent"
 
 local JoystickRemoved = require("luact.src.extensions.love-2d.event").JoystickRemoved
 
-return function (callback, dependencies)
+local typeFunction = require "luact.src.types.func"
+local typeTable = require "luact.src.types.table"
+local typeOptional = require "luact.src.types.optional"
+
+local optionalTable = typeOptional(typeTable)
+
+return function (callback, dependencies, listen)
   assert(renderContext.isActive(), "useJoystickRemoved: illegal access")
   assert(type(callback) == "function", "useJoystickRemoved: callback must be a function.")
   assert(type(dependencies) == "table" or dependencies == nil, "useJoystickRemoved: dependencies must be a table.")
-  useEvent(JoystickRemoved, callback, dependencies)
+  useEvent(JoystickRemoved, callback, dependencies, listen)
 end
