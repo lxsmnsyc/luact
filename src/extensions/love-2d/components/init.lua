@@ -29,6 +29,7 @@ return {
   Arc = load("Arc"),
   Circle = load("Circle"),
   Color = load("Color"),
+  Draw = load("Draw"),
   Drawable = load("Drawable"),
   Ellipse = load("Ellipse"),
   Line = load("Line"),

@@ -21,7 +21,9 @@
 --]]
 local Component = require "luact.src.component"
 
-local useDraw = require "luact.src.extensions.love-2d.hooks.useDraw"
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
 
 local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
@@ -33,16 +35,12 @@ local function Circle(props)
   local x = props.x
   local y = props.y
   local segments = props.segments
-
-  useDraw(function ()
+  
+  local draw = useCallback(function ()
     love.graphics.circle(mode, x, y, radius, segments)
-  end, { mode, radius, x, y, segments })
+  end, { mode, x, y, radius, segments })
 
-  return {
-    draw = function ()
-      love.graphics.circle(mode, x, y, radius, segments)
-    end,
-  }
+  return Draw { on = draw }
 end
 
 local propTypes = {

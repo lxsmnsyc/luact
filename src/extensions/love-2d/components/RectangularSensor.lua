@@ -30,12 +30,15 @@ local useMouseReleased = require "luact.src.extensions.love-2d.hooks.useMouseRel
 local useTouchMoved = require "luact.src.extensions.love-2d.hooks.useMouseMoved"
 local useTouchPressed = require "luact.src.extensions.love-2d.hooks.useMousePressed"
 local useTouchReleased = require "luact.src.extensions.love-2d.hooks.useMouseReleased"
+local useWhyDidYouUpdate = require "luact.src.hooks.useWhyDidYouUpdate"
 
 local typeNumber = require "luact.src.types.number"
 local typeFunction = require "luact.src.types.func"
 local typeOptional = require "luact.src.types.optional"
 
 local function RectangularSensor(props)
+  local disabled = props.disabled
+
   local x = props.x
   local y = props.y
   local width = props.width
@@ -58,6 +61,8 @@ local function RectangularSensor(props)
       and (y <= cy and cy <= (y + height))
   end, { x, y, width, height })
 
+  local enabled = not disabled
+
   useMouseMoved(function (nx, ny, dx, dy, istouch)
     if (check(nx, ny)) then
       onMouseMoved(nx, ny, dx, dy, istouch)
@@ -69,19 +74,19 @@ local function RectangularSensor(props)
       setInsideState(false)
       onMouseLeave(nx, ny, dx, dy, istouch)
     end
-  end, { check, insideState, onMouseMoved, onMouseEnter, onMouseLeave })
+  end, { check, insideState, onMouseMoved, onMouseEnter, onMouseLeave }, enabled)
 
   useMousePressed(function (nx, ny, button, istouch)
     if (insideState or check(nx, ny)) then
       onMousePressed(nx, ny, button, istouch)
     end
-  end, { check, insideState, onMousePressed })
+  end, { check, insideState, onMousePressed }, enabled)
 
   useMouseReleased(function (nx, ny, button, istouch)
     if (insideState or check(nx, ny)) then
       onMouseReleased(nx, ny, button, istouch)
     end
-  end, { check, insideState, onMouseReleased })
+  end, { check, insideState, onMouseReleased }, enabled)
 
   useTouchMoved(function (id, nx, ny, dx, dy, pressure)
     if (insideState or check(nx, ny)) then
@@ -90,7 +95,7 @@ local function RectangularSensor(props)
     elseif insideState then
       setInsideState(false)
     end
-  end, { check, insideState, onTouchMoved })
+  end, { check, insideState, onTouchMoved }, enabled)
 
   useTouchPressed(function (id, nx, ny, dx, dy, pressure)
     if (insideState or check(nx, ny)) then
@@ -99,7 +104,7 @@ local function RectangularSensor(props)
     elseif insideState then
       setInsideState(false)
     end
-  end, { check, insideState, onTouchPressed })
+  end, { check, insideState, onTouchPressed }, enabled)
 
   useTouchReleased(function (id, nx, ny, dx, dy, pressure)
     if (insideState or check(nx, ny)) then
@@ -108,9 +113,7 @@ local function RectangularSensor(props)
     elseif insideState then
       setInsideState(false)
     end
-  end, { check, insideState, onTouchReleased })
-
-  return props.children
+  end, { check, insideState, onTouchReleased }, enabled)
 end
 
 local optionalNumber = typeOptional(typeNumber)

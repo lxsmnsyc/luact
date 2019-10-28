@@ -21,7 +21,9 @@
 --]]
 local Component = require "luact.src.component"
 
-local useDraw = require "luact.src.extensions.love-2d.hooks.useDraw"
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
 
 local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
@@ -35,16 +37,12 @@ local function Arc(props)
   local fromAngle = props.fromAngle
   local toAngle = props.toAngle
   local segments = props.segments
-
-  useDraw(function ()
+  
+  local draw = useCallback(function ()
     love.graphics.arc(mode, x, y, radius, fromAngle, toAngle, segments)
   end, { mode, x, y, radius, fromAngle, toAngle, segments })
 
-  return {
-    draw = function ()
-      love.graphics.arc(mode, x, y, radius, fromAngle, toAngle, segments)
-    end,
-  }
+  return Draw { on = draw }
 end
 
 local propTypes = {

@@ -23,35 +23,50 @@ local Component = require "luact.src.component"
 
 local Context = require "luact.src.components.context"
 
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
+
+local Equatable = require "luact.src.utils.equatable"
+
 local typeLineJoin = require "luact.src.extensions.love-2d.types.linejoin"
 local typeOptional = require "luact.src.types.optional"
+local typeChildren = require "luact.src.types.children"
+local typeElement = require "luact.src.types.element"
 
 local LineJoinContext = Context.new("none")
 
 local function LineJoin(props)
   local value = props.value
 
-  local parentValue = LineJoinContext:use()
+  local parentValue = Context.use(LineJoinContext)
   
-  return {
-    beforeDraw = function ()
-      love.graphics.setLineJoin(value)
-    end,
-    Context.Provider {
+  local before = useCallback(function ()
+    love.graphics.setLineJoin(value)
+  end, { value })
+
+  local after = useCallback(function ()
+    love.graphics.setLineJoin(parentValue)
+  end, { parentValue })
+  
+  return Draw {
+    before = before,
+    after = after,
+    child = Context.Provider {
       context = LineJoinContext,
       value = value,
       children = props.children,
+      child = props.child,
     },
-    afterDraw = function ()
-      love.graphics.setLineJoin(parentValue)
-    end
   }
 end
 
 local optionalLineJoin = typeOptional(typeLineJoin)
 
 local propTypes = {
-  value = optionalLineJoin
+  value = optionalLineJoin,
+  children = typeOptional(typeChildren),
+  child = typeOptional(typeElement),
 }
 
 local defaultProps = {

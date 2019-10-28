@@ -26,6 +26,8 @@ local useWindowSize = require "luact.src.extensions.love-2d.hooks.useWindowSize"
 local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
 local typeEitherValues = require "luact.src.types.eitherValues"
+local typeChildren = require "luact.src.types.children"
+local typeElement = require "luact.src.types.element"
 
 function MediaQuery(props)
   local minWidth = props.minWidth
@@ -60,6 +62,8 @@ local propTypes = {
   maxWidth = optionalNumber,
   maxHeight = optionalNumber,
   orientation = typeOptional(typeEitherValues("landscape", "portrait")),
+  children = typeOptional(typeChildren),
+  child = typeOptional(typeElement),
 }
 
 local defaultProps = {

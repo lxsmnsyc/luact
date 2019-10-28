@@ -21,6 +21,10 @@
 --]]
 local Component = require "luact.src.component"
 
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
+
 local typeTexture = require "luact.src.extensions.love-2d.types.texture"
 local typeQuad = require "luact.src.extensions.love-2d.types.quad"
 local typeNumber = require "luact.src.types.number"
@@ -39,11 +43,10 @@ local function Quad(props)
   local shearX = props.shearX
   local shearY = props.shearY
 
-  return {
-    draw = function ()
-      love.graphics.draw(texture, value, x, y, orientation, scaleX, scaleY, originX, originY, shearX, shearY)
-    end,
-  }
+  local on = useCallback(function ()
+    love.graphics.draw(texture, value, x, y, orientation, scaleX, scaleY, originX, originY, shearX, shearY)
+  end, { texture, value, x, y, orientation, scaleX, scaleY, originX, originY, shearX, shearY })
+  return Draw { on = on }
 end
 
 local optionalNumber = typeOptional(typeNumber)

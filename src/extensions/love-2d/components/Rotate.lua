@@ -1,7 +1,3 @@
-local Component = require "luact.src.component"
-
-local typeNumber = require "luact.src.types.number"
-local typeOptional = require "luact.src.types.optional"
 
 --[[
     Luact
@@ -24,37 +20,52 @@ local typeOptional = require "luact.src.types.optional"
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 --]]
+local Component = require "luact.src.component"
+
 local Context = require "luact.src.components.context"
+
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
 
 local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
+local typeChildren = require "luact.src.types.children"
+local typeElement = require "luact.src.types.element"
 
 local RotateContext = Context.new(0)
 
 local function Rotate(props)
   local value = props.value
 
-  local parentValue = RotateContext:use()
+  local parentValue = Context.use(RotateContext)
   
-  return {
-    beforeDraw = function ()
-      love.graphics.rotate(value)
-    end,
-    Context.Provider {
+  local before = useCallback(function ()
+    love.graphics.rotate(value)
+  end, { value })
+
+  local after = useCallback(function ()
+    love.graphics.rotate(parentValue)
+  end, { parentValue })
+  
+  return Draw {
+    before = before,
+    after = after,
+    child = Context.Provider {
       context = RotateContext,
       value = value,
       children = props.children,
+      child = props.child,
     },
-    afterDraw = function ()
-      love.graphics.rotate(parentValue)
-    end
   }
 end
 
 local optionalNumber = typeOptional(typeNumber)
 
 local propTypes = {
-  value = optionalNumber
+  value = optionalNumber,
+  children = typeOptional(typeChildren),
+  child = typeOptional(typeElement),
 }
 
 local defaultProps = {

@@ -22,20 +22,30 @@
 local Component = require "luact.src.component"
 
 local Context = require "luact.src.components.context"
+local Equatable = require "luact.src.utils.equatable"
+
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
 
 local typeEither = require "luact.src.types.either"
-local typeTableOf = require "luact.src.types.tableOf"
 local typeExact = require "luact.src.types.exact"
-local typeIntersect = require "luact.src.types.intersect"
-local typeTableLength = require "luact.src.types.tableLength"
 local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
+local typeElement = require "luact.src.types.element"
+local typeChildren = require "luact.src.types.children"
 
 local hexCode = require "luact.src.extensions.love-2d.utils.hexCode"
 
-local ColorContext = Context.new({ r = 0, g = 0, b = 0, 255 })
+local ColorContext = Context.new({ r = 0, g = 0, b = 0, a = 1 })
 
-local arrayColor = typeIntersect(typeTableOf(typeNumber), typeTableLength(4))
+local arrayColor = typeExact({
+  typeNumber,
+  typeNumber,
+  typeNumber,
+  typeNumber,
+})
+
 local objectColor = typeExact({
   r = typeNumber,
   g = typeNumber,
@@ -46,7 +56,7 @@ local objectColor = typeExact({
 local function Color(props)
   local value = props.value
 
-  local parentColor = ColorContext:use()
+  local parentColor = Context.use(ColorContext)
   
   local pr, pg, pb, pa = parentColor.r, parentColor.g, parentColor.b, parentColor.a
   local r, g, b, a = pr, pg, pb, pa
@@ -62,18 +72,23 @@ local function Color(props)
     a = value.a
   end
   
-  return {
-    beforeDraw = function ()
-      love.graphics.setColor(r, g, b, a)
-    end,
-    Context.Provider {
+  local drawBefore = useCallback(function ()
+    love.graphics.setColor(r, g, b, a)
+  end, { r, g, b, a })
+
+  local drawAfter = useCallback(function ()
+    love.graphics.setColor(pr, pg, pb, pa)
+  end, { pr, pg, pb, pa })
+
+  return Draw {
+    before = drawBefore,
+    after = drawAfter,
+    child = Context.Provider {
       context = ColorContext,
-      value = { r = r, g = g, b = b, a = a },
+      value = Equatable { r = r, g = g, b = b, a = a },
       children = props.children,
+      child = props.child,
     },
-    afterDraw = function ()
-      love.graphics.setColor(pr, pg, pb, pa)
-    end
   }
 end
 
@@ -84,7 +99,9 @@ local propTypes = {
     typeNumber,
     arrayColor,
     objectColor
-  ))
+  )),
+  children = typeOptional(typeChildren),
+  child = typeOptional(typeElement),
 }
 
 local defaultProps = {

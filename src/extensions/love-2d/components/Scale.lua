@@ -23,8 +23,16 @@ local Component = require "luact.src.component"
 
 local Context = require "luact.src.components.context"
 
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
+
+local Equatable = require "luact.src.utils.equatable"
+
 local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
+local typeChildren = require "luact.src.types.children"
+local typeElement = require "luact.src.types.element"
 
 local ScaleContext = Context.new({ x = 1, y = 1 })
 
@@ -32,22 +40,27 @@ local function Scale(props)
   local x = props.y
   local y = props.y
 
-  local parent = ScaleContext:use()
+  local parent = Context.use(ScaleContext)
   local px = parent.x
   local py = parent.y
   
-  return {
-    beforeDraw = function ()
-      love.graphics.scale(x, y)
-    end,
-    Context.Provider {
+  local before = useCallback(function ()
+    love.graphics.scale(x, y)
+  end, { x, y })
+
+  local after = useCallback(function ()
+    love.graphics.scale(px, py)
+  end, { px, py })
+  
+  return Draw {
+    before = before,
+    after = after,
+    child = Context.Provider {
       context = ScaleContext,
-      value = { x = x, y = y },
+      value = Equatable { x = x, y = y },
       children = props.children,
+      child = props.child,
     },
-    afterDraw = function ()
-      love.graphics.scale(px, py)
-    end
   }
 end
 
@@ -56,6 +69,8 @@ local optionalNumber = typeOptional(typeNumber)
 local propTypes = {
   x = optionalNumber,
   y = optionalNumber,
+  children = typeOptional(typeChildren),
+  child = typeOptional(typeElement),
 }
 
 local defaultProps = {

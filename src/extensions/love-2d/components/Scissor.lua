@@ -23,8 +23,16 @@ local Component = require "luact.src.component"
 
 local Context = require "luact.src.components.context"
 
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
+
+local Equatable = require "luact.src.utils.equatable"
+
 local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
+local typeChildren = require "luact.src.types.children"
+local typeElement = require "luact.src.types.element"
 
 local ScissorContext = Context.new()
 
@@ -34,7 +42,7 @@ local function Scissor(props)
   local width = props.width
   local height = props.height
 
-  local parent = ScissorContext:use()
+  local parent = Context.use(ScissorContext)
   local px, py, pw, ph
   
   if (parent) then
@@ -44,22 +52,27 @@ local function Scissor(props)
     ph = parent.height
   end
   
-  return {
-    beforeDraw = function ()
-      love.graphics.translate(x, y, width, height)
-    end,
-    Context.Provider {
-      context = ScissorContext,
-      value = { x = x, y = y, width = width, height = height },
-      children = props.children,
-    },
-    afterDraw = function ()
-      if (parent) then
-        love.graphics.setScissor(px, py, pw, ph)
-      else
-        love.graphics.setScissor()
-      end
+  local before = useCallback(function ()
+    love.graphics.setScissor(x, y, width, height)
+  end, { x, y, width, height })
+
+  local after = useCallback(function ()
+    if (parent) then
+      love.graphics.setScissor(px, py, pw, ph)
+    else
+      love.graphics.setScissor()
     end
+  end, { parent, px, py, pw, ph })
+  
+  return Draw {
+    before = before,
+    after = after,
+    child = Context.Provider {
+      context = ScissorContext,
+      value = Equatable { x = x, y = y, width = width, height = height },
+      children = props.children,
+      child = props.child,
+    },
   }
 end
 
@@ -70,6 +83,8 @@ local propTypes = {
   y = optionalNumber,
   width = optionalNumber,
   height = optionalNumber,
+  children = typeOptional(typeChildren),
+  child = typeOptional(typeElement),
 }
 
 local defaultProps = {

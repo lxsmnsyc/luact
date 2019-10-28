@@ -21,7 +21,9 @@
 --]]
 local Component = require "luact.src.component"
 
-local useDraw = require "luact.src.extensions.love-2d.hooks.useDraw"
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
 
 local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
@@ -33,12 +35,12 @@ local function Rectangle(props, children)
   local height = props.height
   local x = props.x
   local y = props.y
+  
+  local on = useCallback(function ()
+    love.graphics.rectangle(mode, x, y, width, height)
+  end, { mode, x, y, width, height })
 
-  return {
-    draw = function ()
-      love.graphics.rectangle(mode, x, y, width, height)
-    end
-  }
+  return Draw { on = on }
 end
 
 local propTypes = {

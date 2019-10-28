@@ -23,35 +23,50 @@ local Component = require "luact.src.component"
 
 local Context = require "luact.src.components.context"
 
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
+
+local Equatable = require "luact.src.utils.equatable"
+
 local typeLineStyle = require "luact.src.extensions.love-2d.types.linestyle"
 local typeOptional = require "luact.src.types.optional"
+local typeChildren = require "luact.src.types.children"
+local typeElement = require "luact.src.types.element"
 
 local LineStyleContext = Context.new("smooth")
 
 local function LineStyle(props)
   local value = props.value
 
-  local parentValue = LineStyleContext:use()
+  local parentValue = Context.use(LineStyleContext)
   
-  return {
-    beforeDraw = function ()
-      love.graphics.setLineStyle(value)
-    end,
-    Context.Provider {
+  local before = useCallback(function ()
+    love.graphics.setLineStyle(value)
+  end, { value })
+
+  local after = useCallback(function ()
+    love.graphics.setLineStyle(parentValue)
+  end, { parentValue })
+  
+  return Draw {
+    before = before,
+    after = after,
+    child = Context.Provider {
       context = LineStyleContext,
       value = value,
       children = props.children,
+      child = props.child,
     },
-    afterDraw = function ()
-      love.graphics.setLineStyle(parentValue)
-    end
   }
 end
 
 local optionalLineStyle = typeOptional(typeLineStyle)
 
 local propTypes = {
-  value = optionalLineStyle
+  value = optionalLineStyle,
+  children = typeOptional(typeChildren),
+  child = typeOptional(typeElement),
 }
 
 local defaultProps = {

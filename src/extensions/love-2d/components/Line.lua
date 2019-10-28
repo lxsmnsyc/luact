@@ -21,6 +21,11 @@
 --]]
 local Component = require "luact.src.component"
 
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useMemo = require "luact.src.hooks.useMemo"
+local useCallback = require "luact.src.hooks.useCallback"
+
 local typePoints = require "luact.src.extensions.love-2d.types.points"
 
 local typeIntersect = require "luact.src.types.intersect"
@@ -59,13 +64,16 @@ local function flatten(points)
 end
 
 local function Line(props)
-  local points = flatten(props.points)
+  local points = props.points
+  local flattenedPoints = useMemo(function ()
+    return flatten(points)
+  end, { points })
   
-  return {
-    draw = function ()
-      love.graphics.line(points)
-    end
-  }
+  local on = useCallback(function ()
+    love.graphics.line(flattenedPoints)
+  end, flattenedPoints)
+
+  return Draw { on = on }
 end
 
 local propTypes = {

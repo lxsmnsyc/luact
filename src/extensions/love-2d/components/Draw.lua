@@ -21,54 +21,40 @@
 --]]
 local Component = require "luact.src.component"
 
-local Context = require "luact.src.components.context"
-
-local Draw = require "luact.src.extensions.love-2d.components.Draw"
-
-local useCallback = require "luact.src.hooks.useCallback"
-
-local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
+local typeFunction = require "luact.src.types.func"
 local typeChildren = require "luact.src.types.children"
 local typeElement = require "luact.src.types.element"
 
-local LineWidthContext = Context.new(1)
+local Equatable = require "luact.src.utils.equatable"
 
-local function LineWidth(props)
-  local value = props.value
-
-  local parentValue = Context.use(LineWidthContext)
-  
-  local before = useCallback(function ()
-    love.graphics.setLineWidth(value)
-  end, { value })
-
-  local after = useCallback(function ()
-    love.graphics.setLineWidth(parentValue)
-  end, { parentValue })
-  
-  return Draw {
-    before = before,
-    after = after,
-    child = Context.Provider {
-      context = LineWidthContext,
-      value = value,
-      children = props.children,
-      child = props.child,
-    },
-  }
+local function Draw(props)
+  local children = props.children
+  if (children) then
+    return children
+  end
+  local child = props.child
+  if (child) then
+    return child
+  end
 end
 
-local optionalNumber = typeOptional(typeNumber)
+local optionalFunction = typeOptional(typeFunction)
 
 local propTypes = {
-  value = optionalNumber,
+  before = optionalFunction,
+  on = optionalFunction,
+  after = optionalFunction,
   children = typeOptional(typeChildren),
   child = typeOptional(typeElement),
 }
 
+local function defaultFunc() end
+
 local defaultProps = {
-  value = 1
+  before = defaultFunc,
+  on = defaultFunc,
+  after = defaultFunc,
 }
 
-return Component("love.LineWidth", LineWidth, propTypes, defaultProps)
+return Component("love.Draw", Draw, propTypes, defaultProps)

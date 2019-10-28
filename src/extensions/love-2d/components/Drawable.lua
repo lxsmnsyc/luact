@@ -21,6 +21,10 @@
 --]]
 local Component = require "luact.src.component"
 
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
+
 local typeDrawable = require "luact.src.extensions.love-2d.types.drawable"
 local typeNumber = require "luact.src.types.number"
 local typeOptional = require "luact.src.types.optional"
@@ -36,12 +40,12 @@ local function Drawable(props)
   local originY = props.originY
   local shearX = props.shearX
   local shearY = props.shearY
-
-  return {
-    draw = function ()
+  
+  local draw = useCallback(function ()
       love.graphics.draw(value, x, y, orientation, scaleX, scaleY, originX, originY, shearX, shearY)
-    end,
-  }
+    end, { value, x, y, orientation, scaleX, scaleY, originX, originY, shearX, shearY })
+
+  return Draw { on = draw }
 end
 
 local optionalNumber = typeOptional(typeNumber)

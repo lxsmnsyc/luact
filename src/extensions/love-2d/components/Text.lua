@@ -21,7 +21,9 @@
 --]]
 local Component = require "luact.src.component"
 
-local useDraw = require "luact.src.extensions.love-2d.hooks.useDraw"
+local Draw = require "luact.src.extensions.love-2d.components.Draw"
+
+local useCallback = require "luact.src.hooks.useCallback"
 
 local typeOptional = require "luact.src.types.optional"
 local typeNumber = require "luact.src.types.number"
@@ -43,12 +45,12 @@ local function Text(props, children)
   local oy = props.originY
   local kx = props.shearX
   local ky = props.shearY
+  
+  local on = useCallback(function ()
+    love.graphics.print(text, x, y, r, sx, sy, ox, oy, kx, ky)
+  end, { text, x, y, r, sx, sy, ox, oy, kx, ky })
 
-  return {
-    draw = function ()
-      love.graphics.print(text, x, y, r, sx, sy, ox, oy, kx, ky)
-    end,
-  }
+  return Draw { on = on }
 end
 
 local optionalNumber = typeOptional(typeNumber)
