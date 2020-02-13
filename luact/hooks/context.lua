@@ -25,33 +25,42 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
+local tags = require "luact.tags"
+local logs = require "luact.utils.logs"
+
 local weakmap = require "luact.utils.weakmap"
+
 local HOOKS = weakmap()
 
 local wip_fiber
 local wip_hooks
 
-local function render_with_hooks(fiber)
-  wip_fiber = fiber
+local function render_with_hooks(current, work_in_progress)
+  wip_fiber = work_in_progress
   wip_hooks = 0
 
-  HOOKS[fiber] = {}
+  if (current) then
+    HOOKS[work_in_progress] = HOOKS[current]
+  else
+    HOOKS[work_in_progress] = {}
+  end
 end
 
-local function create_hook()
+local function create_hook(tag)
   assert(wip_fiber ~= nil, "Hook called outside Luact component.")
 
   wip_hooks = wip_hooks + 1
 
-  local alternate = wip_fiber.alternate
-  if (alternate and HOOKS[alternate] and HOOKS[alternate][wip_hooks]) then
-    return HOOKS[alternate][wip_hooks]
+  local slot = HOOKS[wip_fiber][wip_hooks]
+
+  if (slot) then
+    assert(slot.type == tag, "Hook has an incompatible slot.")
+  else
+    slot = {
+      type = tag,
+    }
+    HOOKS[wip_fiber][wip_hooks] = slot
   end
-
-  local slot = {}
-
-  local hooks = HOOKS[wip_fiber]
-  hooks[wip_hooks] = slot
 
   return slot
 end
@@ -60,8 +69,17 @@ local function current_fiber()
   return wip_fiber
 end
 
+local function for_each(work_in_progress, handler)
+  local slot = HOOKS[work_in_progress]
+
+  for i = 1, #slot do
+    handler(slot[i])
+  end
+end
+
 return {
   render_with_hooks = render_with_hooks,
   create_hook = create_hook,
   current_fiber = current_fiber,
+  for_each = for_each
 }
