@@ -25,14 +25,13 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local EFFECT_TAGS = {
-
-}
-
 local WORK_TAGS = {
-  PLACEMENT = 0x01,
-  UPDATE = 0x02,
-  DELETE = 0x04,
+  NO_EFFECT = "NO_EFFECT",
+  PERFORMED_WORK = "PERFORMED_WORK",
+  PLACEMENT = "PLACEMENT",
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
+  DELETE_AND_PLACEMENT = "DELETE_AND_PLACEMENT"
 }
 
 local TYPE_TAGS = {
@@ -43,10 +42,24 @@ local TYPE_TAGS = {
   BASIC = "BASIC",
   MEMO = "MEMO",
   MEMO_BASIC = "MEMO_BASIC",
+  META = "META",
+}
+
+local HOOK_TAGS = {
+  CALLBACK = "CALLBACK",
+  CONSTANT = "CONSTANT",
+  DEPENDENCY = "DEPENDENCY",
+  DISPATCH = "DISPATCH",
+  EFFECT = "EFFECT",
+  FORCE_UPDATE = "FORCE_UPDATE",
+  LAYOUT_EFFECT = "LAYOUT_EFFECT",
+  MEMO = "MEMO",
+  REF = "REF",
+  STATE = "STATE",
 }
 
 return {
-  effect = EFFECT_TAGS,
   work = WORK_TAGS,
   type = TYPE_TAGS,
+  hook = HOOK_TAGS,
 }
