@@ -26,11 +26,14 @@
   @copyright Alexis Munsayac 2020
 --]]
 local context = require "luact.hooks.context"
+local tags = require "luact.tags"
+local update = require "luact.fiber.update"
 
 return function (initial_state)
   -- create hook slots
-  local state = context.create_hook()
-  local dispatch = context.create_hook()
+  local wip = context.current_fiber()
+  local state = context.create_hook(tags.hook.STATE)
+  local dispatch = context.create_hook(tags.hook.DEPENDENCY)
 
   -- initialize state
   if (not state.current) then
@@ -49,7 +52,8 @@ return function (initial_state)
       if (action ~= state.current.value) then
         -- schedule update
         state.current.value = action
-        context.current_fiber().reconciler.update()
+
+        update(wip.reconciler)
       end
     end
   end
