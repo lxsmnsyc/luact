@@ -55,7 +55,7 @@ return function (reconciler)
     while (next_unit_of_work and not should_yield) do
       next_unit_of_work = next_unit_of_work:perform_unit_of_work()
 
-      should_yield = deadline < 1
+      should_yield = deadline() < 1
     end
 
     if ((not next_unit_of_work) and wip_root) then
