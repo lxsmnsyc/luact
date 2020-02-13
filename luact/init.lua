@@ -27,13 +27,15 @@
 --]]
 local tags = require "luact.tags"
 local Reconciler = require "luact.reconciler"
-local renderer = require "luact.renderer"
+local render = require "luact.fiber.render"
+local work_loop = require "luact.fiber.work_loop"
 
 local function init(reconciler)
   reconciler = setmetatable(reconciler, Reconciler)
 
   local function Fragment(props)
     return {
+      reconciler = reconciler,
       type = tags.type.FRAGMENT,
       props = props,
     }
@@ -42,6 +44,7 @@ local function init(reconciler)
   local function component(renderer, config)
     return function (props)
       return {
+        reconciler = reconciler,
         type = tags.type.COMPONENT,
         constructor = renderer,
         props = props,
@@ -53,6 +56,7 @@ local function init(reconciler)
   local function basic(renderer, config)
     return function (props)
       return {
+        reconciler = reconciler,
         type = tags.type.BASIC,
         constructor = renderer,
         props = props,
@@ -64,6 +68,7 @@ local function init(reconciler)
   local function memo(renderer, config)
     return function (props)
       return {
+        reconciler = reconciler,
         type = tags.type.MEMO,
         constructor = renderer,
         props = props,
@@ -75,6 +80,7 @@ local function init(reconciler)
   local function memo_basic(renderer, config)
     return function (props)
       return {
+        reconciler = reconciler,
         type = tags.type.MEMO_BASIC,
         constructor = renderer,
         props = props,
@@ -85,17 +91,14 @@ local function init(reconciler)
 
   local function Element(constructor, props)
     return {
+      reconciler = reconciler,
       type = tags.type.HOST,
       constructor = constructor,
       props = props,
     }
   end
 
-  renderer(reconciler)
-
-  local function render(element, container)
-    reconciler.render(element, container)
-  end
+  work_loop(reconciler)
 
   return {
     Fragment = Fragment,
@@ -104,12 +107,21 @@ local function init(reconciler)
     memo = memo,
     memo_basic = memo_basic,
     Element = Element,
-    render = render,
+    render = function (element, container)
+      render(reconciler, element, container)
+    end,
   }
 end
 
 return {
   init = init,
 
+  use_callback = require "luact.hooks.use_callback",
+  use_constant = require "luact.hooks.use_constant",
+  use_force_update = require "luact.hooks.use_force_update",
+  use_layout_effect = require "luact.hooks.use_layout_effect",
+  use_memo = require "luact.hooks.use_memo",
+  use_reducer = require "luact.hooks.use_reducer",
+  use_ref = require "luact.hooks.use_ref",
   use_state = require "luact.hooks.use_state",
 }
