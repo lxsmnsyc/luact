@@ -32,10 +32,8 @@ return function (work_in_progress)
   hooks.for_each(work_in_progress, function (hook)
     if (hook.type == tags.hook.LAYOUT_EFFECT) then
       local current = hook.current
-      if (current.work == tags.work.UPDATE) then
-        if (current.cleanup) then
-          current.cleanup()
-        end
+      if (current.cleanup) then
+        current.cleanup()
       end
     end
   end)
