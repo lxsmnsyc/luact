@@ -34,10 +34,16 @@ end
 function Meta:componentWillUpdate()
 end
 
+function Meta:componentWillUnmount()
+end
+
 function Meta:componentDidUpdate()
 end
 
-function Meta:componentWillUnmount()
+function Meta:componentDidMount()
+end
+
+function Meta:componentDidUpdate()
 end
 
 function Meta:render()
