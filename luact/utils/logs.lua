@@ -4,10 +4,14 @@ local function log(node, level)
 
   for k, v in pairs(node) do
 		local result = ""
-		if (type(v) == "table") then
-			result = result..log(v, level + 1)
-    else
-			result = type(v).."("..tostring(v)..")"
+		if (k == "reconciler") then
+			result = "[[RECONCILER]]"
+		else
+			if (type(v) == "table") then
+				result = result..log(v, level + 1)
+			else
+				result = type(v).."("..tostring(v)..")"
+			end
 		end
 		s = s.."\n"..string.rep("  ", level + 1)..tostring(k)..": "..result..","
 	end
