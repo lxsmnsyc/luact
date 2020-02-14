@@ -39,15 +39,13 @@ return function (reconciler)
         reconciler.next_unit_of_work
       )
 
-      should_yield = deadline.time_remaining() < 1
+      should_yield = deadline() < 1
     end
 
     if ((not reconciler.next_unit_of_work) and reconciler.wip_root) then
       commit_root(reconciler)
     end
-
-    idle.request(work_loop)
   end
 
-  idle.request(work_loop)
+  return work_loop
 end
