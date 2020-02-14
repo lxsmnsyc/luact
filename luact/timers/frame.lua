@@ -31,6 +31,7 @@ local next_node = {}
 local prev_node = {}
 
 local callbacks = {}
+local next_pass = {}
 
 local function request(callback)
   local id = alloc()
@@ -41,6 +42,7 @@ local function request(callback)
   next_node[prev] = id
   prev_node[0] = id
 
+  next_pass[id] = true
   callbacks[id] = callback
 
   return id
@@ -59,8 +61,17 @@ local function update(dt)
   local node = next_node[0]
 
   while (node) do
-    callbacks[node](dt)
-    clear(node)
+    if (not next_pass[node]) then
+      callbacks[node](dt * 1000)
+      clear(node)
+    end
+    node = next_node[node]
+  end
+  node = next_node[0]
+  while (node) do
+    if (next_pass[node]) then
+      next_pass[node] = false
+    end
     node = next_node[node]
   end
 end
