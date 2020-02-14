@@ -25,8 +25,24 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local commit_lifecycles_work = require "luact.fiber.commit_lifecycles_work"
+local tags = require "luact.tags"
 
-return function (reconciler)
-  commit_lifecycles_work(reconciler.current_root.child)
+local with_hooks = require "luact.fiber.commit_lifecycles_delete.with_hooks"
+
+local function commit_delete(work_in_progress)
+  -- Perform effect
+  if (
+    work_in_progress.type == tags.type.COMPONENT
+    or work_in_progress.type == tags.type.MEMO
+  ) then
+    with_hooks(work_in_progress)
+  end
+  -- Iterate all children
+  local child = work_in_progress.child
+  while (child) do
+    commit_delete(child)
+    child = child.sibling
+  end
 end
+
+return commit_delete

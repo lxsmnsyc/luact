@@ -25,8 +25,33 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local commit_lifecycles_work = require "luact.fiber.commit_lifecycles_work"
+local tags = require "luact.tags"
 
-return function (reconciler)
-  commit_lifecycles_work(reconciler.current_root.child)
+local commit_lifecycles_placement = require "luact.fiber.commit_lifecycles_placement"
+local commit_lifecycles_update = require "luact.fiber.commit_lifecycles_update"
+local commit_lifecycles_delete = require "luact.fiber.commit_lifecycles_delete"
+
+local function commit_work(work_in_progress)
+  if (work_in_progress) then
+    if (work_in_progress.work == tags.work.PLACEMENT) then
+      commit_lifecycles_placement(work_in_progress)
+      commit_work(work_in_progress.child)
+    end
+    if (work_in_progress.work == tags.work.UPDATE) then
+      commit_lifecycles_update(work_in_progress)
+      commit_work(work_in_progress.child)
+    end
+    if (work_in_progress.work == tags.work.DELETE) then
+      commit_lifecycles_delete(work_in_progress)
+    end
+    if (work_in_progress.work == tags.work.REPLACEMENT) then
+      commit_lifecycles_delete(work_in_progress.alternate)
+      commit_lifecycles_placement(work_in_progress)
+      commit_work(work_in_progress.child)
+    end
+
+    commit_work(work_in_progress.sibling)
+  end
 end
+
+return commit_work

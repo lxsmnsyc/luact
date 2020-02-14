@@ -25,8 +25,15 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local commit_lifecycles_work = require "luact.fiber.commit_lifecycles_work"
+local tags = require "luact.tags"
 
-return function (reconciler)
-  commit_lifecycles_work(reconciler.current_root.child)
+local with_hooks = require "luact.fiber.commit_lifecycles_placement.with_hooks"
+
+return function (work_in_progress)
+  if (
+    work_in_progress.type == tags.type.COMPONENT
+    or work_in_progress.type == tags.type.MEMO
+  ) then
+    with_hooks(work_in_progress)
+  end
 end

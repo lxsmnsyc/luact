@@ -25,8 +25,18 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local commit_lifecycles_work = require "luact.fiber.commit_lifecycles_work"
+local hooks = require "luact.hooks.context"
+local tags = require "luact.tags"
 
-return function (reconciler)
-  commit_lifecycles_work(reconciler.current_root.child)
+return function (work_in_progress)
+  hooks.for_each(work_in_progress, function (hook)
+    if (hook.type == tags.hook.EFFECT) then
+      local current = hook.current
+      if (current.work == tags.work.UPDATE) then
+        if (current.cleanup) then
+          current.cleanup()
+        end
+      end
+    end
+  end)
 end
