@@ -1,103 +1,88 @@
-local luact = require "luact.src"
+local LuactLove = require "luact-love"
+local Love = require "luact-love.reconciler"
+local Luact = require "luact"
+local frame = require "luact.timers.frame"
 
-local container = {}
+local Rectangle = require "luact-love.components.rectangle"
+local Color = require "luact-love.components.color"
+local Translate = require "luact-love.components.translate"
 
-local DraggableBox = luact.component("DraggableBox", function (props)
-  local inside, setInside = luact.hooks.useState(false)
-  local offsX, setOffsX = luact.hooks.useState(0)
-  local offsY, setOffsY = luact.hooks.useState(0)
-  local down, setDown = luact.hooks.useState(false)
+local ColorBox = Love.component(function (props)
+  local state, set_state = Luact.use_state(0)
 
-  return {
-    luact.love.components.RectangularSensor {
-      x = offsX + props.x,
-      y = offsY + props.y,
-      width = 100,
-      height = 100,
-      onMousePressed = function ()
-        setDown(true)
-      end,
-      onMouseReleased = function ()
-        setDown(false)
-      end,
-      onMouseMoved = function (x, y, dx, dy)
-        if (down) then
-          setOffsX(offsX + dx)
-          setOffsY(offsY + dy)
+  Luact.use_layout_effect(function ()
+    local request
+
+    local function animate(dt)
+      set_state(function (current)
+        if (current < 1000) then
+          return current + dt
         end
-      end,
-    },
-    luact.love.components.Rectangle {
-      mode = "fill",
-      x = offsX + props.x,
-      y = offsY + props.y,
-      width = 100,
-      height = 100
+        return dt
+      end)
+      request = frame.request(animate)
+    end
+
+    request = frame.request(animate)
+
+    return function ()
+      frame.clear(request)
+    end
+  end, {})
+
+  return Color {
+    r = state / 1000,
+    g = props.x / 100,
+    b = props.y / 100,
+    children = {
+      Rectangle {
+        mode = "fill",
+        x = props.x,
+        y = props.y,
+        width = 10,
+        height = 10,
+      },
     }
   }
 end)
 
-local TwoBox = luact.component("TwoBox", function ()
-  return {
-    luact.love.components.Color {
-      value = 0x00FF00FF,
-      children = DraggableBox {
-        x = 100,
-        y = 100,
-      }
-    },
-    luact.love.components.Color {
-      value = 0xFF0000FF,
-      children = DraggableBox {
-        x = 300,
-        y = 300,
-      }
-    },
+local ColorColumn = Love.basic(function (props)
+  return Love.Fragment {
+    ColorBox { x = props.x, y = 10 },
+    ColorBox { x = props.x, y = 20 },
+    ColorBox { x = props.x, y = 30 },
+    ColorBox { x = props.x, y = 40 },
+    ColorBox { x = props.x, y = 50 },
+    ColorBox { x = props.x, y = 60 },
+    ColorBox { x = props.x, y = 70 },
+    ColorBox { x = props.x, y = 80 },
+    ColorBox { x = props.x, y = 90 },
+    ColorBox { x = props.x, y = 100 },
   }
 end)
 
-local LineTest = luact.component("LineTest", function ()
-  return {
-    luact.love.components.LineStyle {
-      value = "rough",
-      children = {
-        luact.love.components.Line {
-          points = {
-            { x = 300, y = 300 },
-            { x = 400, y = 300 },
-            { x = 400, y = 400 },
-            { x = 300, y = 400 },
-          }
-        },
-        luact.love.components.LineWidth {
-          value = 10,
-          children = luact.love.components.Line {
-            points = {
-              { x = 0, y = 0 },
-              { x = 100, y = 0 },
-              { x = 100, y = 100 },
-              { x = 0, y = 100 },
-            }
-          }
-        },
-        luact.love.components.Line {
-          points = {
-            { x = 100, y = 100 },
-            { x = 200, y = 100 },
-            { x = 200, y = 200 },
-            { x = 100, y = 200 },
-          }
-        }
-      }
+local App = Love.basic(function (props)
+  return Translate {
+    x = props.x,
+    y = props.y,
+    children = {
+      ColorColumn { x = 10 },
+      ColorColumn { x = 20 },
+      ColorColumn { x = 30 },
+      ColorColumn { x = 40 },
+      ColorColumn { x = 50 },
+      ColorColumn { x = 60 },
+      ColorColumn { x = 70 },
+      ColorColumn { x = 80 },
+      ColorColumn { x = 90 },
+      ColorColumn { x = 100 },
     }
   }
 end)
 
-local App = luact.component("App", function ()
-  return TwoBox()
-end)
-
-
-luact.render(App(), container)
-
-luact.love.start(container)
+LuactLove.init(Love.Fragment {
+  App { x = 500, y = 0 },
+  App { x = 600, y = 0 },
+  App { x = 500, y = 100 },
+  App { x = 600, y = 100 },
+})
