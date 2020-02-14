@@ -40,7 +40,4 @@ end
 function Reconciler:commit_update(node, old_props, new_props)
 end
 
-function Reconciler:schedule(callback)
-end
-
 return Reconciler
