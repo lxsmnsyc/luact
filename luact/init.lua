@@ -29,6 +29,9 @@ local tags = require "luact.tags"
 local Reconciler = require "luact.reconciler"
 local render = require "luact.fiber.render"
 local work_loop = require "luact.fiber.work_loop"
+local frame = require "luact.timers.frame"
+local timeout = require "luact.timers.timeout"
+local idle = require "luact.timers.idle"
 
 local function init(reconciler)
   reconciler = setmetatable(reconciler, Reconciler)
@@ -41,50 +44,46 @@ local function init(reconciler)
     }
   end
 
-  local function component(renderer, config)
+  local function component(renderer)
     return function (props)
       return {
         reconciler = reconciler,
         type = tags.type.COMPONENT,
         constructor = renderer,
         props = props,
-        config = config,
       }
     end
   end
 
-  local function basic(renderer, config)
+  local function basic(renderer)
     return function (props)
       return {
         reconciler = reconciler,
         type = tags.type.BASIC,
         constructor = renderer,
         props = props,
-        config = config,
       }
     end
   end
 
-  local function memo(renderer, config)
+  local function memo(renderer)
     return function (props)
       return {
         reconciler = reconciler,
         type = tags.type.MEMO,
         constructor = renderer,
         props = props,
-        config = config,
       }
     end
   end
 
-  local function memo_basic(renderer, config)
+  local function memo_basic(renderer)
     return function (props)
       return {
         reconciler = reconciler,
         type = tags.type.MEMO_BASIC,
         constructor = renderer,
         props = props,
-        config = config,
       }
     end
   end
@@ -124,4 +123,12 @@ return {
   use_reducer = require "luact.hooks.use_reducer",
   use_ref = require "luact.hooks.use_ref",
   use_state = require "luact.hooks.use_state",
+
+  update_frame = function (dt)
+    frame.update(dt)
+    timeout.update(dt)
+  end,
+  prevent_idle = function ()
+    idle.prevent()
+  end,
 }
