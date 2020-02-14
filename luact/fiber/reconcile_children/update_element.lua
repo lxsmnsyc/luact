@@ -27,26 +27,58 @@
 --]]
 local tags = require "luact.tags"
 
-local update_with_constructor = require "luact.fiber.reconcile_children.update_with_constructor"
-local update_without_constructor = require "luact.fiber.reconcile_children.update_without_constructor"
 local delete_fiber = require "luact.fiber.reconcile_children.delete_fiber"
 
-return function (parent, old_fiber, element)
-  local new_type = element.type
-  if (
-    new_type == tags.type.BASIC
-    or new_type == tags.type.COMPONENT
-    or new_type == tags.type.HOST
-    or new_type == tags.type.MEMO
-    or new_type == tags.type.MEMO_BASIC
-  ) then
-    return update_with_constructor(parent, old_fiber, element)
-  end
-  if (new_type == tags.type.FRAGMENT or new_type == tags.type.ROOT) then
-    return update_without_constructor(parent, old_fiber, element)
-  end
+local function update_fiber_from_element(parent, old_fiber, element, index, key)
+  local fiber = {
+    reconciler = old_fiber.reconciler,
+    constructor = old_fiber.constructor,
+    type = old_fiber.type,
+    props = element.props,
+    parent = parent,
+    work = tags.work.UPDATE,
+    alternate = old_fiber,
+    instance = old_fiber.instance,
+    index = index,
+    key = key,
+  }
+  parent.map[key or index] = fiber
+  return fiber
+end
+
+local function create_fiber_from_element(parent, element, index, key)
+  local fiber = {
+    reconciler = element.reconciler,
+    constructor = element.constructor,
+    type = element.type,
+    props = element.props,
+    parent = parent,
+    work = tags.work.PLACEMENT,
+    index = index,
+    key = key,
+  }
+  parent.map[key or index] = fiber
+  return fiber
+end
+
+return function (parent, old_fiber, element, index, key)
   if (old_fiber) then
-    return delete_fiber(parent, old_fiber)
+    if (old_fiber.work == tags.work.DELETE and element) then
+      return create_fiber_from_element(parent, element, index, key)
+    end
+    if (not element) then
+      return delete_fiber(parent, old_fiber, element, index, key)
+    end
+    if (element.type ~= old_fiber.type) then
+      return delete_fiber(parent, old_fiber, element, index, key)
+    end
+    if (element.constructor ~= old_fiber.constructor) then
+      return delete_fiber(parent, old_fiber, element, index, key)
+    end
+    return update_fiber_from_element(parent, old_fiber, element, index, key)
+  end
+  if (element) then
+    return create_fiber_from_element(parent, element, index, key)
   end
   return nil
 end
