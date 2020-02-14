@@ -25,30 +25,29 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local alloc, free = require("timers.recycler")()
-local timeout = require "timers.timeout"
-local frame = require "timers.frame"
+local timeout = require "luact.timers.timeout"
+local frame = require "luact.timers.frame"
 
-local scheduleStart, throttleDelay, lazytimer, lazyraf
-local runAttempts = 0
-local isRunning = false
-local remainingTime = 7
-local minThrottle = 35
+local schedule_start, throttle_delay, lazy_timer, lazy_frame
+local run_attempts = 0
+local is_running = false
+local remaining_time = 7
+local min_throttle = 35
 local throttle = 125
-local taskStart = 0
-local tasklength = 0
+local task_start = 0
+local task_size = 0
 local tasks = {}
 local index = 0
 
-local IdleDeadline = {
-  didTimeout = false,
-  timeRemaining = function ()
-    local timeRemaining = remainingTime - (os.clock() - taskStart)
+local idle_deadline = {
+  did_timeout = false,
+  time_remaining = function ()
+    local time_remaining = remaining_time - (os.clock() - task_start)
 
-    if (timeRemaining < 0) then
+    if (time_remaining < 0) then
       return 0
     end
-    return timeRemaining
+    return time_remaining
   end,
 }
 
@@ -73,118 +72,118 @@ local function debounce(fn)
   end
 end
 
-local setInactive = debounce(function ()
-  remainingTime = 22
+local set_inactive = debounce(function ()
+  remaining_time = 22
   throttle = 66
-  minThrottle = 0
+  min_throttle = 0
 end)
 
 
-local function abortRunning()
-  if(isRunning) then
-    if(lazyraf) then
-      frame.clear(lazyraf)
+local function abort_running()
+  if(is_running) then
+    if(lazy_frame) then
+      frame.clear(lazy_frame)
     end
-    if(lazytimer) then
-      timeout.clear(lazytimer)
+    if(lazy_timer) then
+      timeout.clear(lazy_timer)
     end
-    isRunning = false
+    is_running = false
   end
 end
 
-local scheduleLazy
+local schedule_lazy
 
-local function onInputorMutation()
+local function prevent()
   if(throttle ~= 125) then
-    remainingTime = 7
+    remaining_time = 7
     throttle = 125
-    minThrottle = 35
+    min_throttle = 35
 
-    if(isRunning) then
-      abortRunning()
-      scheduleLazy()
+    if(is_running) then
+      abort_running()
+      schedule_lazy()
     end
   end
-  setInactive()
+  set_inactive()
 end
 
-local function runTasks()
+local function run_tasks()
   local task
-  local timeThreshold
+  local time_threshold
 
-  if (remainingTime > 9) then
-    timeThreshold = 9
+  if (remaining_time > 9) then
+    time_threshold = 9
   else
-    timeThreshold = 1
+    time_threshold = 1
   end
 
-  taskStart = os.clock()
-  isRunning = false
+  task_start = os.clock()
+  is_running = false
 
-  lazytimer = nil
+  lazy_timer = nil
 
-  if (runAttempts > 2 or taskStart - throttleDelay - 50 < scheduleStart) then
+  if (run_attempts > 2 or task_start - throttle_delay - 50 < schedule_start) then
     local i = 0
     local len = #tasks
 
-    while (i <= len and IdleDeadline.timeRemaining() > timeThreshold) do
+    while (i <= len and idle_deadline.time_remaining() > time_threshold) do
       task = table.remove(tasks, i)
-      tasklength = tasklength + 1
+      task_size = task_size + 1
       if (task) then
-        task(IdleDeadline)
+        task(idle_deadline)
       end
       i = i + 1
     end
   end
 
   if (#tasks) then
-    scheduleLazy()
+    schedule_lazy()
   else
-    runAttempts = 0
+    run_attempts = 0
   end
 end
 
-local function scheduleAfterRaf()
-  lazyraf = nil
-  lazytimer = timeout.request(runTasks, 0)
+local function schedule_after_frame()
+  lazy_frame = nil
+  lazy_timer = timeout.request(run_tasks, 0)
 end
 
-local function scheduleRaf()
-  lazytimer = nil
-  frame.request(scheduleAfterRaf)
+local function schedule_raf()
+  lazy_timer = nil
+  frame.request(schedule_after_frame)
 end
 
-scheduleLazy = function ()
-  if(isRunning) then
+schedule_lazy = function ()
+  if(is_running) then
     return
   end
-  throttleDelay = throttle - (os.clock() - taskStart)
+  throttle_delay = throttle - (os.clock() - task_start)
 
-  scheduleStart = os.clock()
+  schedule_start = os.clock()
 
-  isRunning = true
+  is_running = true
 
-  if(minThrottle and throttleDelay < minThrottle) then
-    throttleDelay = minThrottle
+  if(min_throttle and throttle_delay < min_throttle) then
+    throttle_delay = min_throttle
   end
 
-  if(throttleDelay > 9) then
-    lazytimer = timeout.request(scheduleRaf, throttleDelay)
+  if(throttle_delay > 9) then
+    lazy_timer = timeout.request(schedule_raf, throttle_delay)
   else
-    throttleDelay = 0
-    scheduleRaf()
+    throttle_delay = 0
+    schedule_raf()
   end
 end
 
 local function request(task)
   index = index + 1
   table.insert(tasks, task)
-  scheduleLazy()
+  schedule_lazy()
   return index
 end
 
 local function cancel(id)
-  index = id - 1 - tasklength
+  index = id - 1 - task_size
   if (tasks[index]) then
     tasks[index] = nil
   end
@@ -193,5 +192,5 @@ end
 return {
   request = request,
   cancel = cancel,
-  on_input = onInputorMutation,
+  prevent = prevent,
 }
