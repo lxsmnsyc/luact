@@ -28,47 +28,82 @@
 local update_element = require "luact.fiber.reconcile_children.update_element"
 local delete_fiber = require "luact.fiber.reconcile_children.delete_fiber"
 
+local weakmap = require "luact.utils.weakmap"
+
+local function get_matching_fiber(current, index)
+  if (current) then
+    return current.map[index]
+  end
+  return nil
+end
+
 return function (current, work_in_progress, new_children)
-  -- get the old fiber's child
-  local old_fiber = current and current.child
+  work_in_progress.map = work_in_progress.map or {}
 
   -- pointer to previous sibling
   local prev
 
+  local function link_fiber(new_fiber, element)
+    -- start linking the new fiber to the work
+    -- in progress fiber (if it is the first child),
+    -- or the previously created fiber.
+    if (not work_in_progress.child) then
+      work_in_progress.child = new_fiber
+    elseif (element) then
+      prev.sibling = new_fiber
+    end
+
+    prev = new_fiber
+  end
+
+  local marked = weakmap()
+
   if (new_children) then
-    -- iterate while index is below children or there is still more old child
-    for i = 1, #new_children do
-      local element = new_children[i]
+    for index = 1, #new_children do
+      -- get the current element
+      local element = new_children[index]
+
+      -- pointer
+      local key
+      if (element) then
+        key = element.key
+      end
 
       -- pointer to the new fiber
-      local new_fiber = update_element(work_in_progress, old_fiber, element)
+      local old_fiber = get_matching_fiber(current, key or index)
+      local new_fiber = update_element(
+        work_in_progress,
+        old_fiber,
+        element,
+        index,
+        key
+      )
 
-      -- If old fiber exists, get the next sibling
       if (old_fiber) then
-        old_fiber = old_fiber.sibling
+        marked[old_fiber] = true
       end
 
-      if (new_fiber) then
-        if (not work_in_progress.child) then
-          work_in_progress.child = new_fiber
-        elseif (element) then
-          prev.sibling = new_fiber
-        end
-
-        prev = new_fiber
-      end
+      -- link resulting fiber
+      link_fiber(new_fiber, element)
     end
   end
 
-  while (old_fiber) do
-    -- Mark old fiber as a deletion
-    local new_fiber = delete_fiber(work_in_progress, old_fiber)
-    if (not work_in_progress.child) then
-      work_in_progress.child = new_fiber
-    else
-      prev.sibling = new_fiber
+  -- delete remaining fiber
+  if (current) then
+    local old_fiber = current.child
+
+    while (old_fiber) do
+      if (not marked[old_fiber]) then
+        local new_fiber = delete_fiber(
+          work_in_progress,
+          old_fiber,
+          nil,
+          old_fiber.index,
+          old_fiber.key
+        )
+        link_fiber(new_fiber)
+      end
+      old_fiber = old_fiber.sibling
     end
-    prev = new_fiber
-    old_fiber = old_fiber.sibling
   end
 end
