@@ -1,7 +1,5 @@
 local luact = require "luact"
-local timeout = require "timers.timeout"
-local frame = require "timers.frame"
-local idle = require "timers.init"
+local timeout = require "luact.timers.timeout"
 local logs = require "luact.utils.logs"
 
 -- Render/Reconciler engine
@@ -13,62 +11,58 @@ local System = luact.init({
       children = {},
     }
   end,
-  append_child = function (self, parent, child)
-    table.insert(parent.children, child)
+  append_child = function (self, parent, child, index)
+    parent.children[index] = child
   end,
   commit_update = function (self, instance, old_props, new_props)
     instance.props = new_props
   end,
-  remove_child = function (self, parent, child)
-    for k, v in pairs(parent.children) do
-      if (v == child) then
-        table.remove(parent.children, k)
-      end
-    end
-  end,
-  schedule = function (self, callback)
-    idle.request(function (deadline)
-      callback(deadline.timeRemaining)
-    end)
+  remove_child = function (self, parent, child, index)
+    parent.children[index] = nil
   end,
 })
 
 function love.update(dt)
-  timeout.update(dt)
-  frame.update(dt)
+  luact.update_frame(dt)
 end
 
 local test = { children = { }}
 
-local LifecycleDemo = System.component(function ()
+local LifecycleDemo = System.component(function (props)
   luact.use_layout_effect(function ()
     return function ()
       error("Unmounted!")
     end
   end, {})
 
-  return System.Element("Hello World", { })
+  return System.Element("Hello World", { key = props.key })
 end)
 
-local Example = System.component(function ()
+
+local Example = System.component(function (props)
   local state, set_state = luact.use_state(true)
 
-  timeout.request(function ()
-    set_state(false)
-  end, 1000 + 1000 * math.random())
+  luact.use_layout_effect(function ()
+    timeout.request(function ()
+      set_state(not state)
+    end, 1000 + 1000 * math.random())
+  end, {state})
 
   if (state) then
-    return LifecycleDemo {}
+    return LifecycleDemo { key = props.key }
   end
   return nil
 end)
 
 local App = System.basic(function ()
   return System.Fragment {
-    Example {},
-    Example {},
-    Example {},
-    Example {},
+    Example { key = 1 },
+    Example { key = 2 },
+    Example { key = 3 },
+    Example { key = 4 },
+    Example { key = 5 },
+    Example { key = 6 },
+    Example { key = 7 },
   }
 end)
 
