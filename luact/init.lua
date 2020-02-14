@@ -97,7 +97,6 @@ local function init(reconciler)
     }
   end
 
-  work_loop(reconciler)
 
   return {
     Fragment = Fragment,
@@ -109,6 +108,7 @@ local function init(reconciler)
     render = function (element, container)
       render(reconciler, element, container)
     end,
+    work_loop = work_loop(reconciler)
   }
 end
 
