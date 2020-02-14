@@ -42,7 +42,7 @@ local index = 0
 local idle_deadline = {
   did_timeout = false,
   time_remaining = function ()
-    local time_remaining = remaining_time - (os.clock() - task_start)
+    local time_remaining = remaining_time - ((os.clock() * 1000) - task_start)
 
     if (time_remaining < 0) then
       return 0
@@ -55,7 +55,7 @@ local function debounce(fn)
   local id, timestamp
   local wait = 99
   local function check()
-    local last = os.clock() - timestamp
+    local last = (os.clock() * 1000) - timestamp
 
     if (last < wait) then
       id = timeout.request(check, wait - last)
@@ -117,7 +117,7 @@ local function run_tasks()
     time_threshold = 1
   end
 
-  task_start = os.clock()
+  task_start = (os.clock() * 1000)
   is_running = false
 
   lazy_timer = nil
@@ -157,9 +157,9 @@ schedule_lazy = function ()
   if(is_running) then
     return
   end
-  throttle_delay = throttle - (os.clock() - task_start)
+  throttle_delay = throttle - ((os.clock() * 1000) - task_start)
 
-  schedule_start = os.clock()
+  schedule_start = (os.clock() * 1000)
 
   is_running = true
 
