@@ -27,19 +27,28 @@
 --]]
 local reconcile_children = require "luact.fiber.reconcile_children"
 local shallow_equal = require "luact.utils.shallow_equal"
+
 local weakmap = require "luact.utils.weakmap"
 
 local CHILDREN = weakmap()
 
+local function initial_render(current, work_in_progress)
+  local children = { work_in_progress.constructor(work_in_progress.props) }
+  CHILDREN[work_in_progress] = children
+  reconcile_children(current, work_in_progress, children)
+end
+
 return function (current, work_in_progress)
-  -- Check if props is not equal
-  if (current.should_update or not shallow_equal(work_in_progress.props, current.props)) then
-    local children = { work_in_progress.constructor(work_in_progress.props) }
-    CHILDREN[work_in_progress] = children
-    reconcile_children(current, work_in_progress, children)
+  if (current) then
+    -- Check if props is not equal
+    if (not shallow_equal(work_in_progress.props, current.props)) then
+      initial_render(current, work_in_progress)
+    else
+      -- render with old children
+      reconcile_children(current, work_in_progress, CHILDREN[current])
+    end
   else
-    -- render with old children
-    reconcile_children(current, CHILDREN[current])
+    initial_render(current, work_in_progress)
   end
   return work_in_progress.child
 end
