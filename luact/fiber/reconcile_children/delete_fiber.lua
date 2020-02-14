@@ -27,28 +27,34 @@
 --]]
 local tags = require "luact.tags"
 
-return function (parent, old_fiber, element)
+return function (parent, old_fiber, element, index, key)
+  local fiber
   if (element) then
-    return {
+    fiber = {
       reconciler = element.reconciler,
       constructor = element.constructor,
       type = element.type,
       props = element.props,
       parent = parent,
-      work = tags.work.DELETE,
+      work = tags.work.REPLACEMENT,
       alternate = old_fiber,
       instance = old_fiber.instance,
+      index = index,
+      key = key,
+    }
+  else
+    fiber = {
+      reconciler = old_fiber.reconciler,
+      constructor = old_fiber.constructor,
+      type = old_fiber.type,
+      props = old_fiber.props,
+      parent = parent,
+      work = tags.work.DELETE,
+      alternate = old_fiber,
+      index = index,
+      key = key,
     }
   end
-
-  return {
-    reconciler = old_fiber.reconciler,
-    constructor = old_fiber.constructor,
-    type = old_fiber.type,
-    props = old_fiber.props,
-    parent = parent,
-    work = tags.work.DELETE_AND_PLACEMENT,
-    alternate = old_fiber,
-    instance = old_fiber.instance,
-  }
+  parent.map[key or index] = fiber
+  return fiber
 end
