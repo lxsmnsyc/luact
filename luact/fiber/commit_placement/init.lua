@@ -27,17 +27,17 @@
 --]]
 local tags = require "luact.tags"
 
-local commit_placement_host = require "luact.fiber.commit_placement.commit_placement_host"
-local commit_placement_with_hooks = require "luact.fiber.commit_placement.commit_placement_with_hooks"
+local with_host = require "luact.fiber.commit_placement.with_host"
+local with_hooks = require "luact.fiber.commit_placement.with_hooks"
 
 return function (work_in_progress)
   if (work_in_progress.type == tags.type.HOST) then
-    commit_placement_host(work_in_progress)
+    with_host(work_in_progress)
   end
   if (
     work_in_progress.type == tags.type.COMPONENT
     or work_in_progress.type == tags.type.MEMO
   ) then
-    commit_placement_with_hooks(work_in_progress)
+    with_hooks(work_in_progress)
   end
 end

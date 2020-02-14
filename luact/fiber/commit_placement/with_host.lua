@@ -25,23 +25,16 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
+local get_host_parent = require "luact.fiber.get_host_parent"
+local get_instance_index = require "luact.fiber.get_instance_index"
 
 return function (work_in_progress)
-  local parent = work_in_progress
-
-  while (true) do
-    parent = parent.parent
-
-    if (parent and (parent.type == tags.type.HOST or parent.type == tags.type.ROOT)) then
-      break
-    end
-    if (not parent) then
-      break
-    end
-  end
-
+  local parent = get_host_parent(work_in_progress)
   if (parent and work_in_progress.instance) then
-    work_in_progress.reconciler:append_child(parent.instance, work_in_progress.instance)
+    work_in_progress.reconciler:append_child(
+      parent.instance,
+      work_in_progress.instance,
+      get_instance_index(parent)
+    )
   end
 end
