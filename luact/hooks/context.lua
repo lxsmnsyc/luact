@@ -72,8 +72,10 @@ end
 local function for_each(work_in_progress, handler)
   local slot = HOOKS[work_in_progress]
 
-  for i = 1, #slot do
-    handler(slot[i])
+  if (slot) then
+    for i = 1, #slot do
+      handler(slot[i])
+    end
   end
 end
 
