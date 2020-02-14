@@ -44,7 +44,7 @@ local function commit_work(work_in_progress)
     if (work_in_progress.work == tags.work.DELETE) then
       commit_delete(work_in_progress)
     end
-    if (work_in_progress.work == tags.work.DELETE_AND_PLACEMENT) then
+    if (work_in_progress.work == tags.work.REPLACEMENT) then
       commit_delete(work_in_progress.alternate)
       commit_placement(work_in_progress)
       commit_work(work_in_progress.child)
