@@ -25,19 +25,19 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
+local hooks = require "luact.hooks.context"
 local tags = require "luact.tags"
 
-local with_host = require "luact.fiber.commit_update.with_host"
-local with_hooks = require "luact.fiber.commit_update.with_hooks"
-
 return function (work_in_progress)
-  if (work_in_progress.type == tags.type.HOST) then
-    with_host(work_in_progress)
-  end
-  if (
-    work_in_progress.type == tags.type.COMPONENT
-    or work_in_progress.type == tags.type.MEMO
-  ) then
-    with_hooks(work_in_progress)
-  end
+  hooks.for_each(work_in_progress, function (hook)
+    if (hook.type == tags.hook.LAYOUT_EFFECT) then
+      local current = hook.current
+      if (current.work == tags.work.UPDATE) then
+        if (current.cleanup) then
+          current.cleanup()
+        end
+        current.cleanup = current.effect()
+      end
+    end
+  end)
 end

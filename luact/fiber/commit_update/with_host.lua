@@ -25,19 +25,17 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
-
-local with_host = require "luact.fiber.commit_update.with_host"
-local with_hooks = require "luact.fiber.commit_update.with_hooks"
+local get_host_parent = require "luact.fiber.get_host_parent"
+local get_instance_index = require "luact.fiber.get_instance_index"
 
 return function (work_in_progress)
-  if (work_in_progress.type == tags.type.HOST) then
-    with_host(work_in_progress)
-  end
-  if (
-    work_in_progress.type == tags.type.COMPONENT
-    or work_in_progress.type == tags.type.MEMO
-  ) then
-    with_hooks(work_in_progress)
+  local parent = get_host_parent(work_in_progress)
+  if (work_in_progress.instance) then
+    work_in_progress.reconciler:commit_update(
+      work_in_progress.instance,
+      work_in_progress.alternate.props,
+      work_in_progress.props,
+      get_instance_index(parent)
+    )
   end
 end
