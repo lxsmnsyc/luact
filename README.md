@@ -182,8 +182,6 @@ You can read more info about it in the official React documentation: https://rea
 Some features from React that will be implemented soon:
 * Context API
 * Portal API
-* "Class"-based components (or in our case, metatables)
-* `ErrorBoundary` component for rendering error fallback.
 
 ## Credits
 
