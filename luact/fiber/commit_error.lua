@@ -25,17 +25,22 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local reconcile_children = require "luact.fiber.reconcile_children"
-local safely_render = require "luact.fiber.begin_work.safely_render"
+local tags = require "luact.tags"
+local error_registry = require "luact.fiber.error_registry"
 
-return function (current, work_in_progress)
-  local result = safely_render(work_in_progress, function ()
-    return work_in_progress.constructor(work_in_progress.props)
-  end)
+return function (work_in_progress)
+  if (work_in_progress.type == tags.type.ERROR_BOUNDARY) then
+    local props = work_in_progress.props
 
-  if (result) then
-    reconcile_children(current, work_in_progress, { result })
-    return work_in_progress.child
+    if (props and type(props.catch) == "function") then
+      props.catch(error_registry.get(work_in_progress))
+    end
   end
-  return nil
+  if (work_in_progress.type == tags.type.META) then
+    local componentDidCatch = work_in_progress.componentDidCatch
+
+    if (type(componentDidCatch == "function")) then
+      componentDidCatch(work_in_progress, error_registry.get(work_in_progress))
+    end
+  end
 end

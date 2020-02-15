@@ -35,7 +35,7 @@ local HOOKS = weakmap()
 local wip_fiber
 local wip_hooks
 
-local function render_with_hooks(current, work_in_progress)
+local function render(current, work_in_progress)
   wip_fiber = work_in_progress
   wip_hooks = 0
 
@@ -44,6 +44,11 @@ local function render_with_hooks(current, work_in_progress)
   else
     HOOKS[work_in_progress] = {}
   end
+end
+
+local function end_render()
+  wip_fiber = nil
+  wip_hooks = 0
 end
 
 local function create_hook(tag)
@@ -80,7 +85,8 @@ local function for_each(work_in_progress, handler)
 end
 
 return {
-  render_with_hooks = render_with_hooks,
+  render = render,
+  end_render = end_render,
   create_hook = create_hook,
   current_fiber = current_fiber,
   for_each = for_each

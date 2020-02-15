@@ -98,8 +98,17 @@ local function init(reconciler)
     }
   end
 
+  local function ErrorBoundary(props)
+    return {
+      reconciler = reconciler,
+      type = tags.type.ERROR_BOUNDARY,
+      props = props,
+    }
+  end
+
   return {
     Fragment = Fragment,
+    ErrorBoundary = ErrorBoundary,
     component = component,
     basic = basic,
     memo = memo,

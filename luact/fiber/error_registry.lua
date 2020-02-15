@@ -25,17 +25,44 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local reconcile_children = require "luact.fiber.reconcile_children"
-local safely_render = require "luact.fiber.begin_work.safely_render"
+local tags = require "luact.tags"
+local weakmap = require "luact.utils.weakmap"
 
-return function (current, work_in_progress)
-  local result = safely_render(work_in_progress, function ()
-    return work_in_progress.constructor(work_in_progress.props)
-  end)
+local ERRORS = weakmap()
 
-  if (result) then
-    reconcile_children(current, work_in_progress, { result })
-    return work_in_progress.child
+local function find_nearest_boundary(work_in_progress)
+  local parent = work_in_progress.parent
+
+  while (parent) do
+    if (parent.type == tags.type.ERROR_BOUNDARY) then
+      return parent
+    end
+    if (parent.type == tags.type.META) then
+      return parent
+    end
+    parent = parent.parent
   end
   return nil
 end
+
+local function capture_error(work_in_progress, err)
+  local parent = find_nearest_boundary(work_in_progress)
+
+  if (parent) then
+    local errors = ERRORS[parent] or {}
+    table.insert(errors, err)
+    ERRORS[parent] = errors
+  else
+    error(err)
+  end
+end
+
+local function get_errors(work_in_progress)
+  return ERRORS[work_in_progress]
+end
+
+return {
+  capture = capture_error,
+  get = get_errors,
+  find_nearest_boundary = find_nearest_boundary,
+}

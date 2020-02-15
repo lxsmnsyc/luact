@@ -43,8 +43,6 @@ Reconciler must have the following functions:
 * `commit_update` - updates the given UI node.
   ```lua
   commit_update = function (self, instance, old_props, new_props)
-    instance.props = new_props
-  end,
   ```
   - `instance` is the UI node instance to be updated.
   - `old_props` is the UI node's previous props.
@@ -52,8 +50,6 @@ Reconciler must have the following functions:
 * `remove_child` - removes the UI node from the parent
   ```lua
   remove_child = function (self, parent, child, index)
-    parent.children[index] = nil
-  end,
   ```
   - `parent` is the parent UI node.
   - `child` is the child UI node to be removed from the parent.
@@ -61,6 +57,7 @@ Reconciler must have the following functions:
 
 Once a reconciler has been defined, the function `Luact.init` can be called to initialize the render system. This function returns a table with the following properties:
 - `Fragment` - Luact component for adapting multiple children.
+- `ErrorBoundary` - Luact component for setting up error boundaries for render and commit phase.
 - `component` - Function for constructing a Luact component. Receives a `render` function.
 - `basic` - Similar to `component` except that this is strictly for stateless components.
 - `memo` - Memoized version of the `component`.
@@ -125,6 +122,34 @@ local List = Renderer.basic(function (props)
   }
 end)
 ```
+
+- `ErrorBoundary` is a kind of component that accumulates render and commit phase errors from within its tree. `ErrorBoundary` tries to render every possible child inside the tree until all trees has been covered. If `ErrorBoundary` catches an error, the error is pushed to the accumulated table of errors, and once the lifecycle phase begins, runs the `catch` prop to receive the errors.
+
+Example below yields an error for using hooks inside a `basic` component.
+
+```lua
+local B = Love.basic(function ()
+  Luact.use_constant(function ()
+    return "Wtf"
+  end)
+
+  return Love.Element("Hello", { message = "World" })
+end)
+
+local A = Love.component(function ()
+  return Love.ErrorBoundary {
+    catch = function (errors)
+      error(logs(errors, 0))
+    end,
+    children = {
+      B {},
+      B {},
+    }
+  }
+end)
+```
+
+- `Meta` is a kind of component constructor similar to React Class Components. `Meta` is also a cross of stateful component and error boundary.
 
 - `Element` is what represents your UI in your container and are the elements that are processed by your custom Reconciler. In React, this is similar to HTML elements.
 

@@ -26,16 +26,8 @@
   @copyright Alexis Munsayac 2020
 --]]
 local reconcile_children = require "luact.fiber.reconcile_children"
-local safely_render = require "luact.fiber.begin_work.safely_render"
 
 return function (current, work_in_progress)
-  local result = safely_render(work_in_progress, function ()
-    return work_in_progress.constructor(work_in_progress.props)
-  end)
-
-  if (result) then
-    reconcile_children(current, work_in_progress, { result })
-    return work_in_progress.child
-  end
-  return nil
+  reconcile_children(current, work_in_progress, work_in_progress.props.children)
+  return work_in_progress.child
 end

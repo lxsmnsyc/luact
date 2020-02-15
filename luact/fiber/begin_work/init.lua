@@ -35,6 +35,7 @@ local update_memo = require "luact.fiber.begin_work.update_memo"
 local update_memo_basic = require "luact.fiber.begin_work.update_memo_basic"
 local update_root = require "luact.fiber.begin_work.update_root"
 local update_meta = require "luact.fiber.begin_work.update_meta"
+local update_error_boundary = require "luact.fiber.begin_work.update_error_boundary"
 
 return function (current, work_in_progress)
   if (work_in_progress.type == tags.type.BASIC) then
@@ -60,6 +61,9 @@ return function (current, work_in_progress)
   end
   if (work_in_progress.type == tags.type.META) then
     return update_meta(current, work_in_progress)
+  end
+  if (work_in_progress.type == tags.type.ERROR_BOUNDARY) then
+    return update_error_boundary(current, work_in_progress)
   end
   return nil
 end
