@@ -80,9 +80,15 @@ local App = Love.basic(function (props)
   }
 end)
 
-LuactLove.init(Love.Fragment {
-  App { x = 500, y = 0 },
-  App { x = 600, y = 0 },
-  App { x = 500, y = 100 },
-  App { x = 600, y = 100 },
-})
+local Main = Love.create_meta(function (class)
+  function class:render()
+    return Love.Fragment {
+      App { x = 500, y = 0 },
+      App { x = 600, y = 0 },
+      App { x = 500, y = 100 },
+      App { x = 600, y = 100 },
+    }
+  end
+end)
+
+LuactLove.init(Main {})
