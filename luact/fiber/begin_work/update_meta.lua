@@ -25,19 +25,17 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
+local reconcile_children = require "luact.fiber.reconcile_children"
 
-local with_hooks = require "luact.fiber.commit_lifecycles_update.with_hooks"
-local with_meta = require "luact.fiber.commit_lifecycles_update.with_meta"
-
-return function (work_in_progress)
-  if (
-    work_in_progress.type == tags.type.COMPONENT
-    or work_in_progress.type == tags.type.MEMO
-  ) then
-    with_hooks(work_in_progress)
+return function (current, work_in_progress)
+  if (not work_in_progress.instance) then
+    work_in_progress.instance = work_in_progress.constructor.new(
+      work_in_progress.props
+    )
+  else
+    work_in_progress.instance.props = work_in_progress.props
   end
-  if (work_in_progress.type == tags.type.META) then
-    with_meta(work_in_progress)
-  end
+  local children = { work_in_progress.instance:render() }
+  reconcile_children(current, work_in_progress, children)
+  return work_in_progress.child
 end

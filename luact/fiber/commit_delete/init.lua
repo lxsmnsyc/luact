@@ -29,6 +29,7 @@ local tags = require "luact.tags"
 
 local with_hooks = require "luact.fiber.commit_delete.with_hooks"
 local with_host = require "luact.fiber.commit_delete.with_host"
+local with_meta = require "luact.fiber.commit_delete.with_meta"
 
 local function commit_delete(work_in_progress)
   -- Perform effect
@@ -41,6 +42,10 @@ local function commit_delete(work_in_progress)
   ) then
     with_hooks(work_in_progress)
   end
+  if (work_in_progress.type == tags.type.META) then
+    with_meta(work_in_progress)
+  end
+
   -- Iterate all children
   local child = work_in_progress.child
   while (child) do

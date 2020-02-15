@@ -25,19 +25,10 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
-
-local with_hooks = require "luact.fiber.commit_lifecycles_update.with_hooks"
-local with_meta = require "luact.fiber.commit_lifecycles_update.with_meta"
-
 return function (work_in_progress)
-  if (
-    work_in_progress.type == tags.type.COMPONENT
-    or work_in_progress.type == tags.type.MEMO
-  ) then
-    with_hooks(work_in_progress)
-  end
-  if (work_in_progress.type == tags.type.META) then
-    with_meta(work_in_progress)
+  local componentDidUpdate = work_in_progress.componentDidUpdate
+
+  if (type(componentDidUpdate) == "function") then
+    componentDidUpdate(work_in_progress)
   end
 end

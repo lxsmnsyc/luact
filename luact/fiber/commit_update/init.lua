@@ -29,6 +29,7 @@ local tags = require "luact.tags"
 
 local with_host = require "luact.fiber.commit_update.with_host"
 local with_hooks = require "luact.fiber.commit_update.with_hooks"
+local with_meta = require "luact.fiber.commit_update.with_meta"
 
 return function (work_in_progress)
   if (work_in_progress.type == tags.type.HOST) then
@@ -39,5 +40,8 @@ return function (work_in_progress)
     or work_in_progress.type == tags.type.MEMO
   ) then
     with_hooks(work_in_progress)
+  end
+  if (work_in_progress.type == tags.type.META) then
+    with_meta(work_in_progress)
   end
 end
