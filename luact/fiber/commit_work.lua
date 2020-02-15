@@ -31,22 +31,37 @@ local commit_placement = require "luact.fiber.commit_placement"
 local commit_update = require "luact.fiber.commit_update"
 local commit_delete = require "luact.fiber.commit_delete"
 
+local error_registry = require "luact.fiber.error_registry"
+
+local function safely_commit(work_in_progress, commit, alternate)
+  local status, result = pcall(commit, alternate or work_in_progress)
+
+  if (status) then
+    return true
+  end
+  error_registry.capture(work_in_progress, result)
+  return false
+end
+
 local function commit_work(work_in_progress)
   if (work_in_progress) then
+    local commit_on_child = true
     if (work_in_progress.work == tags.work.PLACEMENT) then
-      commit_placement(work_in_progress)
-      commit_work(work_in_progress.child)
+      safely_commit(work_in_progress, commit_placement)
     end
     if (work_in_progress.work == tags.work.UPDATE) then
-      commit_update(work_in_progress)
-      commit_work(work_in_progress.child)
+      safely_commit(work_in_progress, commit_update)
     end
     if (work_in_progress.work == tags.work.DELETE) then
-      commit_delete(work_in_progress)
+      safely_commit(work_in_progress, commit_delete)
+      commit_on_child = false
     end
     if (work_in_progress.work == tags.work.REPLACEMENT) then
-      commit_delete(work_in_progress.alternate)
-      commit_placement(work_in_progress)
+      safely_commit(work_in_progress, commit_delete, work_in_progress.alternate)
+      safely_commit(work_in_progress, commit_placement)
+    end
+
+    if (commit_on_child) then
       commit_work(work_in_progress.child)
     end
 
