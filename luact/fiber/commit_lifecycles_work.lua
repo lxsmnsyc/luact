@@ -30,23 +30,42 @@ local tags = require "luact.tags"
 local commit_lifecycles_placement = require "luact.fiber.commit_lifecycles_placement"
 local commit_lifecycles_update = require "luact.fiber.commit_lifecycles_update"
 local commit_lifecycles_delete = require "luact.fiber.commit_lifecycles_delete"
+local commit_error = require "luact.fiber.commit_error"
+
+local error_registry = require "luact.fiber.error_registry"
+
+local function safely_commit(work_in_progress, commit, alternate)
+  local status, result = pcall(commit, alternate or work_in_progress)
+
+  if (status) then
+    return true
+  end
+  error_registry.capture(work_in_progress, result)
+  return false
+end
 
 local function commit_work(work_in_progress)
   if (work_in_progress) then
+    local commit_on_child = true
     if (work_in_progress.work == tags.work.PLACEMENT) then
-      commit_lifecycles_placement(work_in_progress)
-      commit_work(work_in_progress.child)
+      safely_commit(work_in_progress, commit_lifecycles_placement)
     end
     if (work_in_progress.work == tags.work.UPDATE) then
-      commit_lifecycles_update(work_in_progress)
-      commit_work(work_in_progress.child)
+      safely_commit(work_in_progress, commit_lifecycles_update)
     end
     if (work_in_progress.work == tags.work.DELETE) then
-      commit_lifecycles_delete(work_in_progress)
+      safely_commit(work_in_progress, commit_lifecycles_delete)
+      commit_on_child = false
     end
     if (work_in_progress.work == tags.work.REPLACEMENT) then
-      commit_lifecycles_delete(work_in_progress.alternate)
-      commit_lifecycles_placement(work_in_progress)
+      safely_commit(work_in_progress, commit_lifecycles_delete, work_in_progress.alternate)
+      safely_commit(work_in_progress, commit_lifecycles_placement)
+    end
+
+    -- Special kind of work
+    if (error_registry.get(work_in_progress)) then
+      commit_error(work_in_progress)
+    elseif (commit_on_child) then
       commit_work(work_in_progress.child)
     end
 
