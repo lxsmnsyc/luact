@@ -25,17 +25,16 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local reconcile_children = require "luact.fiber.reconcile_children"
-local safely_render = require "luact.fiber.begin_work.safely_render"
+local error_registry = require "luact.fiber.error_registry"
 
-return function (current, work_in_progress)
-  local result = safely_render(work_in_progress, function ()
-    return work_in_progress.constructor(work_in_progress.props)
-  end)
+return function (work_in_progress, render)
+  -- safely call render process if parent is found
+  local status, result = pcall(render)
 
-  if (result) then
-    reconcile_children(current, work_in_progress, { result })
-    return work_in_progress.child
+  if (status) then
+    return result
   end
+  -- report error to parent
+  error_registry.capture(work_in_progress, result)
   return nil
 end

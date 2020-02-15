@@ -27,15 +27,24 @@
 --]]
 local reconcile_children = require "luact.fiber.reconcile_children"
 local shallow_equal = require "luact.utils.shallow_equal"
+local safely_render = require "luact.fiber.begin_work.safely_render"
 
 local weakmap = require "luact.utils.weakmap"
 
 local CHILDREN = weakmap()
 
 local function initial_render(current, work_in_progress)
-  local children = { work_in_progress.constructor(work_in_progress.props) }
-  CHILDREN[work_in_progress] = children
-  reconcile_children(current, work_in_progress, children)
+  local result = safely_render(work_in_progress, function ()
+    return work_in_progress.constructor(work_in_progress.props)
+  end)
+
+  if (result) then
+    local children = { result }
+    CHILDREN[work_in_progress] = children
+    reconcile_children(current, work_in_progress, children)
+    return work_in_progress.child
+  end
+  return nil
 end
 
 return function (current, work_in_progress)

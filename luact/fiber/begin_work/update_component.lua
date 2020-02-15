@@ -27,10 +27,20 @@
 --]]
 local reconcile_children = require "luact.fiber.reconcile_children"
 local hooks = require "luact.hooks.context"
+local safely_render = require "luact.fiber.begin_work.safely_render"
 
 return function (current, work_in_progress)
-  hooks.render_with_hooks(current, work_in_progress)
-  local children = { work_in_progress.constructor(work_in_progress.props) }
-  reconcile_children(current, work_in_progress, children)
-  return work_in_progress.child
+  hooks.render(current, work_in_progress)
+
+  local result = safely_render(work_in_progress, function ()
+    return work_in_progress.constructor(work_in_progress.props)
+  end)
+
+  hooks.end_render()
+
+  if (result) then
+    reconcile_children(current, work_in_progress, { result })
+    return work_in_progress.child
+  end
+  return nil
 end
