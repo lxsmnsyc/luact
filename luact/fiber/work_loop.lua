@@ -27,7 +27,6 @@
 --]]
 local commit_root = require "luact.fiber.commit_root"
 local perform_unit_of_work = require "luact.fiber.perform_unit_of_work"
-local idle = require "luact.timers.idle"
 
 return function (reconciler)
   local function work_loop(deadline)
