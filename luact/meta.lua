@@ -25,28 +25,61 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local Meta = {}
-Meta.__index = Meta
+local update = require "luact.fiber.update"
+local tags = require "luact.tags"
 
-function Meta:componentWillMount()
+return function (reconciler)
+  local BaseMeta = {}
+  BaseMeta.__index = BaseMeta
+
+  function BaseMeta:componentWillMount()
+  end
+
+  function BaseMeta:componentWillUpdate()
+  end
+
+  function BaseMeta:componentWillUnmount()
+  end
+
+  function BaseMeta:componentDidUpdate()
+  end
+
+  function BaseMeta:componentDidMount()
+  end
+
+  function BaseMeta:componentDidUpdate()
+  end
+
+  function BaseMeta:render()
+  end
+
+  function BaseMeta:setState(action)
+    if (type(action) == "function") then
+      action = action(self.state)
+    end
+
+    -- schedule update
+    self.state = action
+    update(reconciler)
+  end
+
+  return function (setup)
+    local Meta = setmetatable({}, BaseMeta)
+    Meta.__index = Meta
+    setup(Meta)
+
+    function Meta.new(props)
+      return setmetatable({
+        props = props,
+      }, Meta)
+    end
+
+    return function (props)
+      return {
+        type = tags.type.META,
+        props = props,
+        constructor = Meta
+      }
+    end
+  end
 end
-
-function Meta:componentWillUpdate()
-end
-
-function Meta:componentWillUnmount()
-end
-
-function Meta:componentDidUpdate()
-end
-
-function Meta:componentDidMount()
-end
-
-function Meta:componentDidUpdate()
-end
-
-function Meta:render()
-end
-
-return Meta

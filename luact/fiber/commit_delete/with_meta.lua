@@ -25,16 +25,10 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local reconcile_children = require "luact.fiber.reconcile_children"
+return function (work_in_progress)
+  local componentWillUnmount = work_in_progress.componentWillUnmount
 
-
-return function (current, work_in_progress)
-  if (not work_in_progress.instance) then
-    work_in_progress.instance = work_in_progress.reconciler:create_instance(
-      work_in_progress.constructor,
-      work_in_progress.props
-    )
+  if (type(componentWillUnmount) == "function") then
+    componentWillUnmount(work_in_progress)
   end
-  reconcile_children(current, work_in_progress, work_in_progress.props.children)
-  return work_in_progress.child
 end

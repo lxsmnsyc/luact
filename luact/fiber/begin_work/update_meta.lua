@@ -27,14 +27,15 @@
 --]]
 local reconcile_children = require "luact.fiber.reconcile_children"
 
-
 return function (current, work_in_progress)
   if (not work_in_progress.instance) then
-    work_in_progress.instance = work_in_progress.reconciler:create_instance(
-      work_in_progress.constructor,
+    work_in_progress.instance = work_in_progress.constructor.new(
       work_in_progress.props
     )
+  else
+    work_in_progress.instance.props = work_in_progress.props
   end
-  reconcile_children(current, work_in_progress, work_in_progress.props.children)
+  local children = { work_in_progress.instance:render() }
+  reconcile_children(current, work_in_progress, children)
   return work_in_progress.child
 end

@@ -32,6 +32,7 @@ local work_loop = require "luact.fiber.work_loop"
 local frame = require "luact.timers.frame"
 local timeout = require "luact.timers.timeout"
 local idle = require "luact.timers.idle"
+local Meta = require "luact.meta"
 
 local function init(reconciler)
   reconciler = setmetatable(reconciler, Reconciler)
@@ -97,7 +98,6 @@ local function init(reconciler)
     }
   end
 
-
   return {
     Fragment = Fragment,
     component = component,
@@ -108,7 +108,8 @@ local function init(reconciler)
     render = function (element, container)
       render(reconciler, element, container)
     end,
-    work_loop = work_loop(reconciler)
+    work_loop = work_loop(reconciler),
+    create_meta = Meta(reconciler)
   }
 end
 
