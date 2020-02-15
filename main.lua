@@ -2,6 +2,7 @@ local LuactLove = require "luact-love"
 local Love = require "luact-love.reconciler"
 local Luact = require "luact"
 local frame = require "luact.timers.frame"
+local logs = require "luact.utils.logs"
 
 local Rectangle = require "luact-love.components.rectangle"
 local Color = require "luact-love.components.color"
@@ -90,5 +91,41 @@ local Main = Love.create_meta(function (class)
     }
   end
 end)
-
 LuactLove.init(Main {})
+
+
+-- local C = Love.basic(function ()
+--   return Love.Element("Hello", { message = "World" })
+-- end)
+
+-- local B = Love.basic(function ()
+--   Luact.use_constant(function ()
+--     return "Wtf"
+--   end)
+
+--   return Love.Element("Hello", { message = "World" })
+-- end)
+
+-- local D = Love.basic(function ()
+--   return Love.Fragment {
+--     C {},
+--     B {},
+--   }
+-- end)
+
+-- local A = Love.component(function ()
+--   return Love.ErrorBoundary {
+--     catch = function (errors)
+--       error(logs(errors, 0))
+--     end,
+--     children = {
+--       B {},
+--       C {},
+--       B {},
+--       D {},
+--       B {},
+--     }
+--   }
+-- end)
+
+-- LuactLove.init(A {})
