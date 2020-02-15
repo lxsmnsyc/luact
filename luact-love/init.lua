@@ -73,8 +73,6 @@ function love.run()
 
       draw_all()
 
-      love.graphics.print(logs(layers, 0))
-
 			love.graphics.present()
     end
 
