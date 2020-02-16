@@ -33,6 +33,7 @@ local frame = require "luact.timers.frame"
 local timeout = require "luact.timers.timeout"
 local idle = require "luact.timers.idle"
 local Meta = require "luact.meta"
+local init_context = require "luact.context.create"
 
 local function init(reconciler)
   reconciler = setmetatable(reconciler, Reconciler)
@@ -118,7 +119,8 @@ local function init(reconciler)
       render(reconciler, element, container)
     end,
     work_loop = work_loop(reconciler),
-    create_meta = Meta(reconciler)
+    create_meta = Meta(reconciler),
+    create_context = init_context(reconciler),
   }
 end
 
@@ -127,6 +129,7 @@ return {
 
   use_callback = require "luact.hooks.use_callback",
   use_constant = require "luact.hooks.use_constant",
+  use_context = require "luact.hooks.use_context",
   use_force_update = require "luact.hooks.use_force_update",
   use_layout_effect = require "luact.hooks.use_layout_effect",
   use_memo = require "luact.hooks.use_memo",
