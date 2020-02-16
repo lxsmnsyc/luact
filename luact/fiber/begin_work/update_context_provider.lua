@@ -26,11 +26,18 @@
   @copyright Alexis Munsayac 2020
 --]]
 local reconcile_children = require "luact.fiber.reconcile_children"
-local ContextEmitter = require "luact.context.emitter"
 
 return function (current, work_in_progress)
+  local value = work_in_progress.props.value
   if (not work_in_progress.instance) then
-    work_in_progress.instance = ContextEmitter.new(work_in_progress.props.value)
+    work_in_progress.instance = {
+      should_update = true,
+      value = value,
+    }
+  else
+    local prev = work_in_progress.instance.value
+    work_in_progress.instance.should_update = prev ~= value
+    work_in_progress.instance.value = value
   end
   reconcile_children(current, work_in_progress, work_in_progress.props.children)
   return work_in_progress.child
