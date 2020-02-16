@@ -29,34 +29,32 @@ local tags = require "luact.tags"
 
 local delete_fiber = require "luact.fiber.reconcile_children.delete_fiber"
 
+local create_fiber = require "luact.fiber.create"
+
 local function update_fiber_from_element(parent, old_fiber, element, index, key)
-  local fiber = {
-    reconciler = old_fiber.reconciler,
-    constructor = old_fiber.constructor,
-    type = old_fiber.type,
-    props = element.props,
-    parent = parent,
-    work = tags.work.UPDATE,
-    alternate = old_fiber,
-    instance = old_fiber.instance,
-    index = index,
-    key = key,
-  }
+  local fiber = create_fiber(old_fiber.reconciler, old_fiber.type, element.props)
+
+  fiber.constructor = old_fiber.constructor
+  fiber.parent = parent
+  fiber.alternate = old_fiber
+  fiber.work = tags.work.UPDATE
+  fiber.instance = old_fiber.instance
+  fiber.index = index
+  fiber.key = key
+
   parent.map[key or index] = fiber
   return fiber
 end
 
 local function create_fiber_from_element(parent, element, index, key)
-  local fiber = {
-    reconciler = element.reconciler,
-    constructor = element.constructor,
-    type = element.type,
-    props = element.props,
-    parent = parent,
-    work = tags.work.PLACEMENT,
-    index = index,
-    key = key,
-  }
+  local fiber = create_fiber(element.reconciler, element.type, element.props)
+
+  fiber.constructor = element.constructor
+  fiber.parent = parent
+  fiber.work = tags.work.PLACEMENT
+  fiber.index = index
+  fiber.key = key
+
   parent.map[key or index] = fiber
   return fiber
 end
