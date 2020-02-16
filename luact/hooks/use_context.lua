@@ -33,17 +33,11 @@ local read_context = require "luact.context.read"
 local hooks = require "luact.hooks.context"
 
 return function (context_type)
-  local force_update = use_force_update()
+  local work_in_progress = hooks.current_fiber()
 
-  local context = read_context(hooks.current_fiber(), context_type)
+  local context = read_context(work_in_progress, context_type)
 
-  use_layout_effect(function ()
-    context.instance:on(force_update)
+  work_in_progress.dependencies[context_type] = true
 
-    return function ()
-      context.instance:off(force_update)
-    end
-  end, { context })
-
-  return context.instance.value
+  return context.value
 end
