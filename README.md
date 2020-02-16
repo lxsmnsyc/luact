@@ -180,8 +180,13 @@ You can read more info about it in the official React documentation: https://rea
 ## Future goals
 
 Some features from React that will be implemented soon:
-* Context API
 * Portal API
+* `should_update`, `get_derived_state_from_props`, `get_derived_state_from_error`, `get_derived_state_from_context` Meta methods
+* Refs
+* Component Stack Trace
+
+Other goals:
+* 
 
 ## Credits
 
