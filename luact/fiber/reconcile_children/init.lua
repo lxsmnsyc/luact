@@ -38,7 +38,6 @@ local function get_matching_fiber(current, index)
 end
 
 return function (current, work_in_progress, new_children)
-  work_in_progress.map = work_in_progress.map or {}
 
   -- pointer to previous sibling
   local prev
