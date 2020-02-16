@@ -32,7 +32,7 @@ return function (work_in_progress, context_type)
 
   while (parent) do
     if (parent.type == tags.type.CONTEXT_PROVIDER and parent.props.owner == context_type) then
-      return parent
+      return parent.instance
     end
     parent = parent.parent
   end
