@@ -1,12 +1,14 @@
 local tags = require "luact.tags"
 
+local create_fiber = require "luact.fiber.create"
+
 return function (reconciler)
-  reconciler.wip_root = {
-    type = tags.type.ROOT,
-    reconciler = reconciler,
-    instance = reconciler.current_root.instance,
-    props = reconciler.current_root.props,
-    alternate = reconciler.current_root,
-  }
-  reconciler.next_unit_of_work = reconciler.wip_root
+  local current = reconciler.current_root
+  local fiber = create_fiber(reconciler, tags.type.ROOT, current.props)
+
+  fiber.instance = current.instance
+  fiber.alternate = current
+
+  reconciler.wip_root = fiber
+  reconciler.next_unit_of_work = fiber
 end
