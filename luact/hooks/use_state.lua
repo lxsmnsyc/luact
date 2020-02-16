@@ -52,6 +52,7 @@ return function (initial_state)
       if (action ~= state.current.value) then
         -- schedule update
         state.current.value = action
+
         wip.should_update = true
         update(wip.reconciler)
       end
