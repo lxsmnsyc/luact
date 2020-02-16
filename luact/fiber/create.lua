@@ -26,6 +26,7 @@
   @copyright Alexis Munsayac 2020
 --]]
 local tags = require "luact.tags"
+local weakmap = require "luact.utils.weakmap"
 
 return function (reconciler, fiber_type, props)
   return {
@@ -40,5 +41,6 @@ return function (reconciler, fiber_type, props)
     index = nil,
     key = nil,
     map = {},
+    dependencies = weakmap(),
   }
 end

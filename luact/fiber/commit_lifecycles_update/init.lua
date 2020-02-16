@@ -29,7 +29,6 @@ local tags = require "luact.tags"
 
 local with_hooks = require "luact.fiber.commit_lifecycles_update.with_hooks"
 local with_meta = require "luact.fiber.commit_lifecycles_update.with_meta"
-local with_context_provider = require "luact.fiber.commit_lifecycles_update.with_context_provider"
 
 return function (work_in_progress)
   if (
@@ -40,8 +39,5 @@ return function (work_in_progress)
   end
   if (work_in_progress.type == tags.type.META) then
     with_meta(work_in_progress)
-  end
-  if (work_in_progress.type == tags.type.CONTEXT_PROVIDER) then
-    with_context_provider(work_in_progress)
   end
 end

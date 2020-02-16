@@ -135,6 +135,7 @@ return {
   use_memo = require "luact.hooks.use_memo",
   use_reducer = require "luact.hooks.use_reducer",
   use_ref = require "luact.hooks.use_ref",
+  use_render_count = require "luact.hooks.use_render_count",
   use_state = require "luact.hooks.use_state",
 
   update_frame = function (dt)

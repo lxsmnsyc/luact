@@ -53,8 +53,10 @@ return function (current, work_in_progress)
     if (not shallow_equal(work_in_progress.props, current.props)) then
       initial_render(current, work_in_progress)
     else
+      local children = CHILDREN[current]
+      CHILDREN[work_in_progress] = children
       -- render with old children
-      reconcile_children(current, work_in_progress, CHILDREN[current])
+      reconcile_children(current, work_in_progress, children)
     end
   else
     initial_render(current, work_in_progress)

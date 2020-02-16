@@ -29,12 +29,26 @@ local reconcile_children = require "luact.fiber.reconcile_children"
 local read_context = require "luact.context.read"
 local safely_render = require "luact.fiber.begin_work.safely_render"
 
+local weakmap = require "luact.utils.weakmap"
+
+local CHILDREN = weakmap()
+
 return function (current, work_in_progress)
   local props = work_in_progress.props
 
   local result = safely_render(work_in_progress, function ()
     local context = read_context(work_in_progress, props.owner)
-    return props.consume(context.instance.value)
+
+    local children
+    if (context.should_update) then
+      children = props.consume(context.value)
+    else
+      children = CHILDREN[current]
+    end
+
+    CHILDREN[work_in_progress] = children
+
+    return children
   end)
 
   if (result) then

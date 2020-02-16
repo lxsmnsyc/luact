@@ -29,6 +29,7 @@ local reconcile_children = require "luact.fiber.reconcile_children"
 local shallow_equal = require "luact.utils.shallow_equal"
 local hooks = require "luact.hooks.context"
 local safely_render = require "luact.fiber.begin_work.safely_render"
+local read_context = require "luact.context.read"
 
 local weakmap = require "luact.utils.weakmap"
 
@@ -54,12 +55,27 @@ end
 
 return function (current, work_in_progress)
   if (current) then
+    local should_update = current.should_update
+
+    if (not should_update) then
+      local deps = current.dependencies
+      for context_type in pairs(deps) do
+        local instance = read_context(work_in_progress, context_type)
+
+        if (instance.should_update) then
+          should_update = true
+          break
+        end
+      end
+    end
     -- Check if props is not equal
-    if (current.should_update or not shallow_equal(work_in_progress.props, current.props)) then
+    if (should_update or not shallow_equal(work_in_progress.props, current.props)) then
       initial_render(current, work_in_progress)
     else
+      local children = CHILDREN[current]
+      CHILDREN[work_in_progress] = children
       -- render with old children
-      reconcile_children(current, work_in_progress, CHILDREN[current])
+      reconcile_children(current, work_in_progress, children)
     end
   else
     initial_render(current, work_in_progress)

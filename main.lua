@@ -11,7 +11,7 @@ local Translate = require "luact-love.components.translate"
 local OffsetContext = Love.create_context()
 local GradeContext = Love.create_context()
 
-local ColorBox = Love.component(function (props)
+local ColorBox = Love.memo(function (props)
   local state = Luact.use_context(GradeContext)
   local x = Luact.use_context(OffsetContext)
 
@@ -48,6 +48,7 @@ local ColorColumn = Love.basic(function (props)
     },
   } 
 end)
+
 
 local App = Love.component(function (props)
   local state, set_state = Luact.use_state(0)
@@ -97,7 +98,7 @@ end)
 
 local Main = Love.create_meta(function (class)
   function class:component_did_catch(errors)
-    -- error(logs(errors, 0))
+    error(logs(errors, 0))
   end
 
   function class:render()
@@ -111,4 +112,5 @@ local Main = Love.create_meta(function (class)
     }
   end
 end)
-LuactLove.init(Main {})
+
+LuactLove.init(Main { })
