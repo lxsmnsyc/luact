@@ -50,6 +50,7 @@ return function (reducer, initial_state)
       if (result ~= state.current.value) then
         -- schedule update
         state.current.value = result
+
         wip.should_update = true
         update(wip.reconciler)
       end
