@@ -26,9 +26,9 @@
   @copyright Alexis Munsayac 2020
 --]]
 return function (work_in_progress)
-  local componentWillMount = work_in_progress.componentWillMount
+  local component_will_mount = work_in_progress.instance.component_will_mount
 
-  if (type(componentWillMount) == "function") then
-    componentWillMount(work_in_progress)
+  if (type(component_will_mount) == "function") then
+    component_will_mount(work_in_progress)
   end
 end

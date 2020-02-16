@@ -26,9 +26,9 @@
   @copyright Alexis Munsayac 2020
 --]]
 return function (work_in_progress)
-  local componentWillUpdate = work_in_progress.componentWillUpdate
+  local component_will_update = work_in_progress.instance.component_will_update
 
-  if (type(componentWillUpdate) == "function") then
-    componentWillUpdate(work_in_progress)
+  if (type(component_will_update) == "function") then
+    component_will_update(work_in_progress)
   end
 end
