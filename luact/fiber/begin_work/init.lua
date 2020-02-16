@@ -36,6 +36,8 @@ local update_memo_basic = require "luact.fiber.begin_work.update_memo_basic"
 local update_root = require "luact.fiber.begin_work.update_root"
 local update_meta = require "luact.fiber.begin_work.update_meta"
 local update_error_boundary = require "luact.fiber.begin_work.update_error_boundary"
+local update_context_provider = require "luact.fiber.begin_work.update_context_provider"
+local update_context_consumer = require "luact.fiber.begin_work.update_context_consumer"
 
 return function (current, work_in_progress)
   if (work_in_progress.type == tags.type.BASIC) then
@@ -64,6 +66,12 @@ return function (current, work_in_progress)
   end
   if (work_in_progress.type == tags.type.ERROR_BOUNDARY) then
     return update_error_boundary(current, work_in_progress)
+  end
+  if (work_in_progress.type == tags.type.CONTEXT_PROVIDER) then
+    return update_context_provider(current, work_in_progress)
+  end
+  if (work_in_progress.type == tags.type.CONTEXT_CONSUMER) then
+    return update_context_consumer(current, work_in_progress)
   end
   return nil
 end
