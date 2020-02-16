@@ -8,7 +8,48 @@ local Rectangle = require "luact-love.components.rectangle"
 local Color = require "luact-love.components.color"
 local Translate = require "luact-love.components.translate"
 
+local OffsetContext = Love.create_context()
+local GradeContext = Love.create_context()
+
 local ColorBox = Love.component(function (props)
+  local state = Luact.use_context(GradeContext)
+  local x = Luact.use_context(OffsetContext)
+
+  return Color {
+    r = state / 1000,
+    g = x / 100,
+    b = props.y / 100,
+    children = {
+      Rectangle {
+        mode = "fill",
+        x = x,
+        y = props.y,
+        width = 10,
+        height = 10,
+      },
+    }
+  }
+end)
+
+local ColorColumn = Love.basic(function (props)
+  return OffsetContext.Provider {
+    value = props.x,
+    children = {
+      ColorBox { y = 10 },
+      ColorBox { y = 20 },
+      ColorBox { y = 30 },
+      ColorBox { y = 40 },
+      ColorBox { y = 50 },
+      ColorBox { y = 60 },
+      ColorBox { y = 70 },
+      ColorBox { y = 80 },
+      ColorBox { y = 90 },
+      ColorBox { y = 100 },
+    },
+  } 
+end)
+
+local App = Love.component(function (props)
   local state, set_state = Luact.use_state(0)
 
   Luact.use_layout_effect(function ()
@@ -31,101 +72,43 @@ local ColorBox = Love.component(function (props)
     end
   end, {})
 
-  return Color {
-    r = state / 1000,
-    g = props.x / 100,
-    b = props.y / 100,
+  return GradeContext.Provider {
+    value = state,
     children = {
-      Rectangle {
-        mode = "fill",
+      Translate {
         x = props.x,
         y = props.y,
-        width = 10,
-        height = 10,
-      },
-    }
-  }
-end)
-
-local ColorColumn = Love.basic(function (props)
-  return Love.Fragment {
-    ColorBox { x = props.x, y = 10 },
-    ColorBox { x = props.x, y = 20 },
-    ColorBox { x = props.x, y = 30 },
-    ColorBox { x = props.x, y = 40 },
-    ColorBox { x = props.x, y = 50 },
-    ColorBox { x = props.x, y = 60 },
-    ColorBox { x = props.x, y = 70 },
-    ColorBox { x = props.x, y = 80 },
-    ColorBox { x = props.x, y = 90 },
-    ColorBox { x = props.x, y = 100 },
-  }
-end)
-
-local App = Love.basic(function (props)
-  return Translate {
-    x = props.x,
-    y = props.y,
-    children = {
-      ColorColumn { x = 10 },
-      ColorColumn { x = 20 },
-      ColorColumn { x = 30 },
-      ColorColumn { x = 40 },
-      ColorColumn { x = 50 },
-      ColorColumn { x = 60 },
-      ColorColumn { x = 70 },
-      ColorColumn { x = 80 },
-      ColorColumn { x = 90 },
-      ColorColumn { x = 100 },
+        children = {
+          ColorColumn { x = 10 },
+          ColorColumn { x = 20 },
+          ColorColumn { x = 30 },
+          ColorColumn { x = 40 },
+          ColorColumn { x = 50 },
+          ColorColumn { x = 60 },
+          ColorColumn { x = 70 },
+          ColorColumn { x = 80 },
+          ColorColumn { x = 90 },
+          ColorColumn { x = 100 },
+        }
+      }
     }
   }
 end)
 
 local Main = Love.create_meta(function (class)
+  function class:component_did_catch(errors)
+    -- error(logs(errors, 0))
+  end
+
   function class:render()
     return Love.Fragment {
-      App { x = 500, y = 0 },
-      App { x = 600, y = 0 },
-      App { x = 500, y = 100 },
-      App { x = 600, y = 100 },
+      children = {
+        App { x = 500, y = 0 },
+        App { x = 600, y = 0 },
+        App { x = 500, y = 100 },
+        App { x = 600, y = 100 },
+      }
     }
   end
 end)
 LuactLove.init(Main {})
-
-
--- local C = Love.basic(function ()
---   return Love.Element("Hello", { message = "World" })
--- end)
-
--- local B = Love.basic(function ()
---   Luact.use_constant(function ()
---     return "Wtf"
---   end)
-
---   return Love.Element("Hello", { message = "World" })
--- end)
-
--- local D = Love.basic(function ()
---   return Love.Fragment {
---     C {},
---     B {},
---   }
--- end)
-
--- local A = Love.component(function ()
---   return Love.ErrorBoundary {
---     catch = function (errors)
---       error(logs(errors, 0))
---     end,
---     children = {
---       B {},
---       C {},
---       B {},
---       D {},
---       B {},
---     }
---   }
--- end)
-
--- LuactLove.init(A {})

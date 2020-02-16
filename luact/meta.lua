@@ -27,39 +27,40 @@
 --]]
 local update = require "luact.fiber.update"
 local tags = require "luact.tags"
+local assign_table = require "luact.utils.assign_table"
 
 return function (reconciler)
   local BaseMeta = {}
   BaseMeta.__index = BaseMeta
 
-  function BaseMeta:componentWillMount()
+  function BaseMeta:component_will_mount()
   end
 
-  function BaseMeta:componentWillUpdate()
+  function BaseMeta:component_will_update()
   end
 
-  function BaseMeta:componentWillUnmount()
+  function BaseMeta:component_will_unmount()
   end
 
-  function BaseMeta:componentDidUpdate()
+  function BaseMeta:component_did_update()
   end
 
-  function BaseMeta:componentDidMount()
+  function BaseMeta:component_did_mount()
   end
 
-  function BaseMeta:componentDidUpdate()
+  function BaseMeta:component_did_update()
   end
 
   function BaseMeta:render()
   end
 
-  function BaseMeta:setState(action)
+  function BaseMeta:set_state(action)
     if (type(action) == "function") then
       action = action(self.state)
     end
 
     -- schedule update
-    self.state = action
+    self.state = assign_table(self.state, action)
     update(reconciler)
   end
 

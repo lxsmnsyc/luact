@@ -25,18 +25,31 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
+local weakmap = require "luact.utils.weakmap"
 
-local create_fiber = require "luact.fiber.create"
+local ContextEmitter = {}
+ContextEmitter.__index = ContextEmitter
 
-return function (reconciler, element, container)
-  local fiber = create_fiber(reconciler, tags.type.ROOT, {
-    children = { element },
-  })
-
-  fiber.instance = container
-  fiber.alternate = reconciler.current_root
-
-  reconciler.wip_root = fiber
-  reconciler.next_unit_of_work = fiber
+function ContextEmitter.new(value)
+  return setmetatable({
+    value = value,
+    set = weakmap()
+  }, ContextEmitter)
 end
+
+function ContextEmitter:on(callback)
+  self.set[callback] = true
+end
+
+function ContextEmitter:off(callback)
+  self.set[callback] = nil
+end
+
+function ContextEmitter:emit(value)
+  self.value = value
+  for k in pairs(self.set) do
+    k(value)
+  end
+end
+
+return ContextEmitter

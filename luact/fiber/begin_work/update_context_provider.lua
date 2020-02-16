@@ -25,40 +25,14 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
+local reconcile_children = require "luact.fiber.reconcile_children"
+local ContextEmitter = require "luact.context.emitter"
 
-return function (reconciler, type, next_props)
-  return {
-    -- reconciler base
-    reconciler = reconciler,
-
-    -- component type
-    type = type,
-
-    -- component constructor
-    constructor = nil,
-
-    -- props
-    next_props = next_props,
-    prev_props = nil,
-
-    -- pointers
-    alternate = nil,
-
-    child = nil,
-    parent = nil,
-    sibling = nil,
-
-    -- Work
-    work = tags.work.NO_EFFECT,
-
-    -- value
-    instance = nil,
-
-    -- state
-    state = nil,
-
-    -- update_queue
-    update_queue = nil,
-  }
+return function (current, work_in_progress)
+  if (not work_in_progress.instance) then
+    work_in_progress.instance = ContextEmitter.new(work_in_progress.props.value)
+  end
+  reconcile_children(current, work_in_progress, work_in_progress.props.children)
+  return work_in_progress.child
 end
+

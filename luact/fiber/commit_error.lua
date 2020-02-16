@@ -37,10 +37,10 @@ return function (work_in_progress)
     end
   end
   if (work_in_progress.type == tags.type.META) then
-    local componentDidCatch = work_in_progress.componentDidCatch
+    local component_did_catch = work_in_progress.instance.component_did_catch
 
-    if (type(componentDidCatch == "function")) then
-      componentDidCatch(work_in_progress, error_registry.get(work_in_progress))
+    if (type(component_did_catch == "function")) then
+      component_did_catch(work_in_progress, error_registry.get(work_in_progress))
     end
   end
 end

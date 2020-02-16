@@ -27,16 +27,15 @@
 --]]
 local tags = require "luact.tags"
 
-local create_fiber = require "luact.fiber.create"
+return function (work_in_progress, context_type)
+  local parent = work_in_progress.parent
 
-return function (reconciler, element, container)
-  local fiber = create_fiber(reconciler, tags.type.ROOT, {
-    children = { element },
-  })
+  while (parent) do
+    if (parent.type == tags.type.CONTEXT_PROVIDER and parent.props.owner == context_type) then
+      return parent
+    end
+    parent = parent.parent
+  end
 
-  fiber.instance = container
-  fiber.alternate = reconciler.current_root
-
-  reconciler.wip_root = fiber
-  reconciler.next_unit_of_work = fiber
+  return nil
 end

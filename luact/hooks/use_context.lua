@@ -25,18 +25,25 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
+local use_force_update = require "luact.hooks.use_force_update"
+local use_layout_effect = require "luact.hooks.use_layout_effect"
 
-local create_fiber = require "luact.fiber.create"
+local read_context = require "luact.context.read"
 
-return function (reconciler, element, container)
-  local fiber = create_fiber(reconciler, tags.type.ROOT, {
-    children = { element },
-  })
+local hooks = require "luact.hooks.context"
 
-  fiber.instance = container
-  fiber.alternate = reconciler.current_root
+return function (context_type)
+  local force_update = use_force_update()
 
-  reconciler.wip_root = fiber
-  reconciler.next_unit_of_work = fiber
+  local context = read_context(hooks.current_fiber(), context_type)
+
+  use_layout_effect(function ()
+    context.instance:on(force_update)
+
+    return function ()
+      context.instance:off(force_update)
+    end
+  end, { context })
+
+  return context.instance.value
 end

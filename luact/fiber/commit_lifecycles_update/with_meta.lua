@@ -26,9 +26,9 @@
   @copyright Alexis Munsayac 2020
 --]]
 return function (work_in_progress)
-  local componentDidUpdate = work_in_progress.componentDidUpdate
+  local component_did_update = work_in_progress.instance.component_did_update
 
-  if (type(componentDidUpdate) == "function") then
-    componentDidUpdate(work_in_progress)
+  if (type(component_did_update) == "function") then
+    component_did_update(work_in_progress)
   end
 end

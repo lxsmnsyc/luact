@@ -25,18 +25,15 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
+return function (destination, source)
+  local new = {}
 
-local create_fiber = require "luact.fiber.create"
+  for k, v in pairs(destination) do
+    new[k] = v
+  end
+  for k, v in pairs(source) do
+    new[k] = v
+  end
 
-return function (reconciler, element, container)
-  local fiber = create_fiber(reconciler, tags.type.ROOT, {
-    children = { element },
-  })
-
-  fiber.instance = container
-  fiber.alternate = reconciler.current_root
-
-  reconciler.wip_root = fiber
-  reconciler.next_unit_of_work = fiber
+  return new
 end

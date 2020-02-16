@@ -25,18 +25,21 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
+local reconcile_children = require "luact.fiber.reconcile_children"
+local read_context = require "luact.context.read"
+local safely_render = require "luact.fiber.begin_work.safely_render"
 
-local create_fiber = require "luact.fiber.create"
+return function (current, work_in_progress)
+  local props = work_in_progress.props
 
-return function (reconciler, element, container)
-  local fiber = create_fiber(reconciler, tags.type.ROOT, {
-    children = { element },
-  })
+  local result = safely_render(work_in_progress, function ()
+    local context = read_context(work_in_progress, props.owner)
+    return props.consume(context.instance.value)
+  end)
 
-  fiber.instance = container
-  fiber.alternate = reconciler.current_root
-
-  reconciler.wip_root = fiber
-  reconciler.next_unit_of_work = fiber
+  if (result) then
+    reconcile_children(current, work_in_progress, { result })
+    return work_in_progress.child
+  end
+  return nil
 end

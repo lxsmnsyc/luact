@@ -27,16 +27,44 @@
 --]]
 local tags = require "luact.tags"
 
-local create_fiber = require "luact.fiber.create"
+return function (reconciler)
+  return function (initial_value)
+    local owner = {}
 
-return function (reconciler, element, container)
-  local fiber = create_fiber(reconciler, tags.type.ROOT, {
-    children = { element },
-  })
+    local function Provider(props)
+      local value = props.value
 
-  fiber.instance = container
-  fiber.alternate = reconciler.current_root
+      if (value == nil) then
+        value = initial_value
+      end
 
-  reconciler.wip_root = fiber
-  reconciler.next_unit_of_work = fiber
+      return {
+        reconciler = reconciler,
+        type = tags.type.CONTEXT_PROVIDER,
+        props = {
+          value = value,
+          owner = owner,
+          key = props.key,
+          children = props.children,
+        }
+      }
+    end
+
+    local function Consumer(props)
+      return {
+        reconciler = reconciler,
+        type = tags.type.CONTEXT_CONSUMER,
+        props = {
+          consume = props.consume,
+          owner = owner,
+          key = props.key,
+        },
+      }
+    end
+
+    owner.Provider = Provider
+    owner.Consumer = Consumer
+
+    return owner
+  end
 end

@@ -26,9 +26,9 @@
   @copyright Alexis Munsayac 2020
 --]]
 return function (work_in_progress)
-  local componentDidUnmount = work_in_progress.componentDidUnmount
+  local component_did_unmount = work_in_progress.instance.component_did_unmount
 
-  if (type(componentDidUnmount) == "function") then
-    componentDidUnmount(work_in_progress)
+  if (type(component_did_unmount) == "function") then
+    component_did_unmount(work_in_progress)
   end
 end
