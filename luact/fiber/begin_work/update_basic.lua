@@ -34,8 +34,7 @@ return function (current, work_in_progress)
   end)
 
   if (result) then
-    reconcile_children(current, work_in_progress, { result })
-    return work_in_progress.child
+    return reconcile_children(current, work_in_progress, { result })
   end
   return nil
 end

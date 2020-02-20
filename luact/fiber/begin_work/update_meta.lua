@@ -36,6 +36,5 @@ return function (current, work_in_progress)
     work_in_progress.instance.props = work_in_progress.props
   end
   local children = { work_in_progress.instance:render() }
-  reconcile_children(current, work_in_progress, children)
-  return work_in_progress.child
+  return reconcile_children(current, work_in_progress, children)
 end

@@ -105,4 +105,6 @@ return function (current, work_in_progress, new_children)
       old_fiber = old_fiber.sibling
     end
   end
+
+  return work_in_progress.child
 end

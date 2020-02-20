@@ -41,8 +41,7 @@ local function initial_render(current, work_in_progress)
   if (result) then
     local children = { result }
     CHILDREN[work_in_progress] = children
-    reconcile_children(current, work_in_progress, children)
-    return work_in_progress.child
+    return reconcile_children(current, work_in_progress, children)
   end
   return nil
 end
@@ -51,15 +50,14 @@ return function (current, work_in_progress)
   if (current) then
     -- Check if props is not equal
     if (not shallow_equal(work_in_progress.props, current.props)) then
-      initial_render(current, work_in_progress)
+      return initial_render(current, work_in_progress)
     else
       local children = CHILDREN[current]
       CHILDREN[work_in_progress] = children
+      CHILDREN[current] = nil
       -- render with old children
-      reconcile_children(current, work_in_progress, children)
+      return reconcile_children(current, work_in_progress, children)
     end
-  else
-    initial_render(current, work_in_progress)
   end
-  return work_in_progress.child
+  return initial_render(current, work_in_progress)
 end

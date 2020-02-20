@@ -28,6 +28,9 @@
 local reconcile_children = require "luact.fiber.reconcile_children"
 
 return function (current, work_in_progress)
-  reconcile_children(current, work_in_progress, work_in_progress.props.children)
-  return work_in_progress.child
+  return reconcile_children(
+    current,
+    work_in_progress,
+    work_in_progress.props.children
+  )
 end
