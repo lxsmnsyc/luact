@@ -61,8 +61,13 @@ local function get_errors(work_in_progress)
   return ERRORS[work_in_progress]
 end
 
+local function clear_errors(fiber)
+  ERRORS[fiber] = nil
+end
+
 return {
   capture = capture_error,
   get = get_errors,
   find_nearest_boundary = find_nearest_boundary,
+  clear_errors = clear_errors,
 }

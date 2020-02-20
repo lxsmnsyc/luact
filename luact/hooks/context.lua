@@ -25,9 +25,6 @@
   @author Alexis Munsayac <alexis.munsayac@gmail.com>
   @copyright Alexis Munsayac 2020
 --]]
-local tags = require "luact.tags"
-local logs = require "luact.utils.logs"
-
 local weakmap = require "luact.utils.weakmap"
 
 local HOOKS = weakmap()
@@ -41,6 +38,7 @@ local function render(current, work_in_progress)
 
   if (current) then
     HOOKS[work_in_progress] = HOOKS[current]
+    HOOKS[current] = nil
   else
     HOOKS[work_in_progress] = {}
   end
@@ -84,10 +82,15 @@ local function for_each(work_in_progress, handler)
   end
 end
 
+local function clear_hooks(fiber)
+  HOOKS[fiber] = nil
+end
+
 return {
   render = render,
   end_render = end_render,
   create_hook = create_hook,
   current_fiber = current_fiber,
-  for_each = for_each
+  for_each = for_each,
+  clear_hooks = clear_hooks,
 }
