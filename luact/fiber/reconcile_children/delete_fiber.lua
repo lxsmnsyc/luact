@@ -28,6 +28,7 @@
 local tags = require "luact.tags"
 
 local create_fiber = require "luact.fiber.create"
+local destroy_fiber = require "luact.fiber.destroy"
 
 return function (parent, old_fiber, element, index, key)
   local fiber
@@ -46,6 +47,8 @@ return function (parent, old_fiber, element, index, key)
   end
 
   fiber.parent = parent
+  destroy_fiber(old_fiber.alternate)
+  old_fiber.alternate = nil
   fiber.alternate = old_fiber
   fiber.index = index
   fiber.key = key

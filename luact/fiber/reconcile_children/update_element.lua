@@ -30,12 +30,15 @@ local tags = require "luact.tags"
 local delete_fiber = require "luact.fiber.reconcile_children.delete_fiber"
 
 local create_fiber = require "luact.fiber.create"
+local destroy_fiber = require "luact.fiber.destroy"
 
 local function update_fiber_from_element(parent, old_fiber, element, index, key)
   local fiber = create_fiber(old_fiber.reconciler, old_fiber.type, element.props)
 
   fiber.constructor = old_fiber.constructor
   fiber.parent = parent
+  destroy_fiber(old_fiber.alternate)
+  old_fiber.alternate = nil
   fiber.alternate = old_fiber
   fiber.work = tags.work.UPDATE
   fiber.instance = old_fiber.instance
