@@ -27,9 +27,13 @@
 --]]
 local commit_effects = require "luact.fiber.commit_effects"
 local commit_lifecycles = require "luact.fiber.commit_lifecycles"
+local destroy_fiber = require "luact.fiber.destroy"
 
 return function (reconciler)
   commit_effects(reconciler)
+  if (reconciler.current_root) then
+    destroy_fiber(reconciler.current_root.alternate)
+  end
   reconciler.current_root = reconciler.wip_root
   reconciler.wip_root = nil
   commit_lifecycles(reconciler)
