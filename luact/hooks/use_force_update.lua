@@ -36,9 +36,10 @@ return function ()
 
   -- initialize dispatcher
   if (not dispatch.current) then
+    local reconciler = wip.reconciler
     dispatch.current = function ()
       wip.should_update = true
-      update(wip.reconciler)
+      update(reconciler)
     end
   end
 

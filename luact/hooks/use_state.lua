@@ -44,6 +44,7 @@ return function (initial_state)
 
   -- initialize dispatcher
   if (not dispatch.current) then
+    local reconciler = wip.reconciler
     dispatch.current = function (action)
       if (type(action) == "function") then
         action = action(state.current.value)
@@ -54,7 +55,7 @@ return function (initial_state)
         state.current.value = action
 
         wip.should_update = true
-        update(wip.reconciler)
+        update(reconciler)
       end
     end
   end
