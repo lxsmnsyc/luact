@@ -28,8 +28,6 @@
 local commit_root = require "luact.fiber.commit_root"
 local perform_unit_of_work = require "luact.fiber.perform_unit_of_work"
 
-local count = 0
-
 return function (reconciler)
   local function work_loop(deadline)
     local should_yield = false
