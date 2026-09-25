@@ -17,6 +17,9 @@ jobs:
         with:
           luaVersion: ${{ matrix.lua }}
       - uses: leafo/gh-actions-luarocks@v5
+        with:
+          # 3.11 cannot load the rocks manifest under LuaJIT
+          luaRocksVersion: "3.13.0"
       - run: luarocks install busted
       - run: luarocks install luacheck
       - run: luacheck .
