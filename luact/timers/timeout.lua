@@ -1,78 +1,58 @@
---[[
-  @license
-  MIT License
+-- Timeouts, like setTimeout.
+--
+-- Time only moves forward when `update(dt)` is called, so timeouts follow
+-- the game clock.
 
-  Copyright (c) 2020 Alexis Munsayac
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
+local M = {}
 
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
+local timers = {}
+local entries = {}
+local next_id = 0
 
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
-
-
-  @author Alexis Munsayac <alexis.munsayac@gmail.com>
-  @copyright Alexis Munsayac 2020
---]]
-local alloc, free = require("luact.timers.recycler")()
-
-local next_node = {}
-local prev_node = {}
-
-local timestamp = {}
-local callbacks = {}
-
-local function request(callback, time)
-  local id = alloc()
-
-  local prev = prev_node[0] or 0
-  next_node[id] = nil
-  prev_node[id] = prev
-  next_node[prev] = id
-  prev_node[0] = id
-
-  timestamp[id] = time / 1000
-  callbacks[id] = callback
-
-  return id
+-- Calls `callback` once `delay` milliseconds have passed. Returns an id for
+-- `clear`.
+function M.request(callback, delay)
+  next_id = next_id + 1
+  local entry = { id = next_id, callback = callback, remaining = (delay or 0) / 1000 }
+  timers[#timers + 1] = entry
+  entries[next_id] = entry
+  return next_id
 end
 
-local function clear(id)
-  if (free(id)) then
-    next_node[prev_node[id] or 0] = next_node[id]
-    prev_node[next_node[id] or 0] = prev_node[id]
-
-    timestamp[id] = nil
-    callbacks[id] = nil
+function M.clear(id)
+  local entry = entries[id]
+  if entry ~= nil then
+    entry.callback = nil
+    entries[id] = nil
   end
 end
 
-local function update(dt)
-  local node = next_node[0]
-
-  while (node) do
-    timestamp[node] = timestamp[node] - dt
-    if (timestamp[node] <= 0) then
-      callbacks[node]()
-      clear(node)
+-- Advances time by `dt` seconds and runs the timeouts that are due, in the
+-- order they were requested.
+function M.update(dt)
+  local current = timers
+  timers = {}
+  local due = {}
+  for i = 1, #current do
+    local entry = current[i]
+    if entry.callback ~= nil then
+      entry.remaining = entry.remaining - dt
+      if entry.remaining <= 0 then
+        due[#due + 1] = entry
+      else
+        timers[#timers + 1] = entry
+      end
     end
-    node = next_node[node]
+  end
+  for i = 1, #due do
+    local entry = due[i]
+    local callback = entry.callback
+    if callback ~= nil then
+      entry.callback = nil
+      entries[entry.id] = nil
+      callback()
+    end
   end
 end
 
-return {
-  request = request,
-  clear = clear,
-  update = update
-}
+return M
