@@ -1,93 +1,134 @@
---[[
-  @license
-  MIT License
+-- Luact renderer for LÖVE (11.x).
+--
+--   local luact = require "luact"
+--   local luact_love = require "luact-love"
+--
+--   function love.load()
+--     luact_love.install(luact.create_element(App))
+--   end
+--
+-- `install` takes over love.update, love.draw and the input callbacks. To
+-- keep your own callbacks, call `update`, `draw` and `emit` from them
+-- instead.
 
-  Copyright (c) 2020 Alexis Munsayac
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
-
-
-  @author Alexis Munsayac <alexis.munsayac@gmail.com>
-  @copyright Alexis Munsayac 2020
---]]
 local luact = require "luact"
-local Love = require "luact-love.reconciler"
-local draw_all = require "luact-love.draw_all"
-local layers = require "luact-love.layers"
-local events = require "luact-love.events"
-local logs = require "luact.utils.logs"
+local timers = require "luact.timers"
+local host = require "luact-love.host"
+local draw = require "luact-love.draw"
 
-function love.run()
-  if love.load then
-    love.load(love.arg.parseGameArguments(arg), arg)
+local M = {}
+
+M.renderer = luact.create_renderer(host)
+M.painters = draw.painters
+
+-- The container of the default root.
+M.stage = { type = "stage", children = {} }
+
+-- Milliseconds of each frame spent rendering, at most.
+M.frame_budget = 8
+
+local root = nil
+
+-- Returns the root that renders into `stage`.
+function M.get_root()
+  if root == nil then
+    root = M.renderer.create_root(M.stage)
   end
+  return root
+end
 
-	-- We don't want the first frame's dt to include time taken by love.load.
-  if love.timer then
-    love.timer.step()
+function M.render(element)
+  M.get_root():render(element)
+end
+
+-- Event listeners
+
+local listeners = {}
+
+function M.subscribe(name, listener)
+  local set = listeners[name]
+  if set == nil then
+    set = {}
+    listeners[name] = set
   end
+  set[listener] = true
+  return function ()
+    set[listener] = nil
+  end
+end
 
-	local dt = 0
-
-	-- Main loop time.
-	return function()
-		-- Process events.
-		if love.event then
-			love.event.pump()
-      for name, a,b,c,d,e,f in love.event.poll() do
-        events[name]:emit(a,b,c,d,e,f)
-				if name == "quit" then
-					return 0
-        end
-			end
-		end
-
-		-- Update dt, as we'll be passing it to update
-    if love.timer then
-      dt = love.timer.step()
-    end
-
-    -- Call update and draw
-    local start = love.timer.getTime()
-    luact.update_frame(dt)
-    events.update:emit(dt)
-
-		if love.graphics and love.graphics.isActive() then
-			love.graphics.origin()
-			love.graphics.clear(love.graphics.getBackgroundColor())
-
-      draw_all()
-
-			love.graphics.present()
-    end
-
-    Love.work_loop(function ()
-      return (love.timer.getTime() - start) * 1000
-    end)
-
-    if love.timer then
-      love.timer.sleep(0.001)
+-- Sends a LÖVE event (such as "keypressed") to every subscribed listener.
+function M.emit(name, ...)
+  local set = listeners[name]
+  if set == nil then
+    return
+  end
+  local snapshot = {}
+  for listener in pairs(set) do
+    snapshot[#snapshot + 1] = listener
+  end
+  for i = 1, #snapshot do
+    if set[snapshot[i]] then
+      snapshot[i](...)
     end
   end
 end
 
-return {
-  init = function (element)
-    Love.render(element, layers)
-  end,
+-- Calls `handler(...)` for each LÖVE event `name` while the component is
+-- mounted. The handler can change between renders.
+function M.use_event(name, handler)
+  local latest = luact.use_ref(handler)
+  luact.use_layout_effect(function ()
+    latest.current = handler
+  end)
+  luact.use_effect(function ()
+    return M.subscribe(name, function (...)
+      latest.current(...)
+    end)
+  end, { name })
+end
+
+-- Frame loop
+
+-- Advances timers and renders pending updates within `frame_budget`.
+function M.update(dt)
+  timers.update(dt)
+  M.emit("update", dt)
+  local get_time = love.timer.getTime
+  local start = get_time()
+  M.renderer.work_loop(function ()
+    return M.frame_budget - (get_time() - start) * 1000
+  end)
+end
+
+function M.draw()
+  draw.draw_container(M.stage)
+end
+
+M.EVENTS = {
+  "keypressed", "keyreleased", "textinput", "textedited",
+  "mousemoved", "mousepressed", "mousereleased", "wheelmoved",
+  "touchpressed", "touchreleased", "touchmoved",
+  "gamepadpressed", "gamepadreleased", "gamepadaxis",
+  "joystickpressed", "joystickreleased", "joystickaxis", "joystickhat",
+  "joystickadded", "joystickremoved",
+  "focus", "mousefocus", "visible", "resize",
+  "filedropped", "directorydropped",
 }
+
+-- Renders `element` and sets love.update, love.draw and the input
+-- callbacks to drive Luact.
+function M.install(element)
+  love.update = M.update
+  love.draw = M.draw
+  for i = 1, #M.EVENTS do
+    local name = M.EVENTS[i]
+    love[name] = function (...)
+      M.emit(name, ...)
+    end
+  end
+  M.render(element)
+  return M.get_root()
+end
+
+return M

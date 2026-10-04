@@ -1,0 +1,28 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lua: ["5.1", "5.4", "luajit-2.1"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leafo/gh-actions-lua@v11
+        with:
+          luaVersion: ${{ matrix.lua }}
+      - uses: leafo/gh-actions-luarocks@v5
+        with:
+          # 3.11 cannot load the rocks manifest under LuaJIT
+          luaRocksVersion: "3.13.0"
+      - run: luarocks install busted
+      - run: luarocks install luacheck
+      - run: luacheck .
+      - run: busted
+      - run: lua examples/console/custom_renderer.lua
+      - run: lua examples/console/counter.lua
